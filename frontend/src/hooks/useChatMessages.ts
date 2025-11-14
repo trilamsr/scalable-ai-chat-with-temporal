@@ -39,44 +39,54 @@ export function useChatMessages(socket: TypedSocket, logger: ILogger): UseChatMe
         { messageId: message.id, from: message.username, textLength: message.text.length },
         'Message received'
       );
-      // Add to persistent Set for duplicate tracking
-      messageIdsRef.current.add(message.id);
+      // Only add to Set if history has already loaded (to avoid filtering out history messages)
+      if (historyLoadedRef.current) {
+        messageIdsRef.current.add(message.id);
+      }
       setMessages((prevMessages) => [...prevMessages, message]);
     };
 
     const handleUserJoined = (data: UserJoinedPayload) => {
       logger.info({ joinedUser: data.username }, 'User joined chat');
       const systemMessage = createSystemMessage(data.username, 'joined', data.timestamp, data.roomId);
-      // Add to persistent Set for duplicate tracking
-      messageIdsRef.current.add(systemMessage.id);
+      // Only add to Set if history has already loaded
+      if (historyLoadedRef.current) {
+        messageIdsRef.current.add(systemMessage.id);
+      }
       setMessages((prevMessages) => [...prevMessages, systemMessage]);
     };
 
     const handleUserLeft = (data: UserLeftPayload) => {
       logger.info({ leftUser: data.username }, 'User left chat');
       const systemMessage = createSystemMessage(data.username, 'left', data.timestamp, data.roomId);
-      // Add to persistent Set for duplicate tracking
-      messageIdsRef.current.add(systemMessage.id);
+      // Only add to Set if history has already loaded
+      if (historyLoadedRef.current) {
+        messageIdsRef.current.add(systemMessage.id);
+      }
       setMessages((prevMessages) => [...prevMessages, systemMessage]);
     };
 
     const handleChatHistory = (historyMessages: Message[]) => {
       logger.info({ messageCount: historyMessages.length }, 'Chat history received');
       setIsLoadingHistory(false);
-      historyLoadedRef.current = true;
 
       if (historyMessages.length > 0) {
         const nonSystemMessages = historyMessages.filter(msg => !msg.isSystem);
+
+        // Initialize Set with all history message IDs
+        nonSystemMessages.forEach(msg => messageIdsRef.current.add(msg.id));
+
         setMessages((prevMessages) => {
-          // Use persistent Set for O(1) duplicate checking instead of creating new Set
-          const newMessages = nonSystemMessages.filter(msg => !messageIdsRef.current.has(msg.id));
+          // Remove any messages that arrived before history (they're duplicates)
+          const preHistoryMessages = prevMessages.filter(msg => !messageIdsRef.current.has(msg.id));
 
-          // Add new message IDs to persistent Set
-          newMessages.forEach(msg => messageIdsRef.current.add(msg.id));
-
-          return [...newMessages, ...prevMessages];
+          // Combine: history first (oldest), then any new messages that arrived during load
+          return [...nonSystemMessages, ...preHistoryMessages];
         });
       }
+
+      // Mark history as loaded AFTER processing to ensure new messages start being tracked
+      historyLoadedRef.current = true;
     };
 
     const eventMap = {

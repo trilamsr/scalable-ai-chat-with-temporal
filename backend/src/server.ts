@@ -27,7 +27,8 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
 
 // Configure Redis Adapter for horizontal scaling
 // Creates a pub/sub pair for Socket.IO communication across multiple instances
-const pubClient = createRedisClient();
+// Use lazyConnect=true to prevent automatic connection, then connect manually
+const pubClient = createRedisClient(true);
 const subClient = pubClient.duplicate();
 
 Promise.all([pubClient.connect(), subClient.connect()])

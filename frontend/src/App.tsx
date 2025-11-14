@@ -71,13 +71,15 @@ const App: React.FC = () => {
                 </div>
               }
             >
-              <ChatWindow
-                socket={socket}
-                windowId={index + 1}
-                username={userConfigs[index].username}
-                color={userConfigs[index].color}
-                roomId={userConfigs[index].roomId}
-              />
+              <div className="h-[600px]">
+                <ChatWindow
+                  socket={socket}
+                  windowId={index + 1}
+                  username={userConfigs[index].username}
+                  color={userConfigs[index].color}
+                  roomId={userConfigs[index].roomId}
+                />
+              </div>
             </ErrorBoundary>
           ))}
         </div>

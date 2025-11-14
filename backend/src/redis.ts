@@ -26,9 +26,15 @@ const DEFAULT_REDIS_CONFIG = {
 /**
  * Create a new Redis client with standard configuration
  * Used for creating pub/sub clients for Socket.IO adapter
+ * @param lazyConnect - If true, client won't connect automatically (useful for Socket.IO adapter)
  */
-export function createRedisClient(): Redis {
-  const client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', DEFAULT_REDIS_CONFIG);
+export function createRedisClient(lazyConnect: boolean = false): Redis {
+  const config = {
+    ...DEFAULT_REDIS_CONFIG,
+    lazyConnect, // Only connect when explicitly told to
+  };
+
+  const client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', config);
 
   client.on('connect', () => redisLogger.debug('Redis client connecting'));
   client.on('ready', () => redisLogger.debug('Redis client ready'));
