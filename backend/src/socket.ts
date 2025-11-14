@@ -1,6 +1,6 @@
 import { Server, Socket } from 'socket.io';
-import { createChildLogger } from '@shared/logger';
-import type {
+import {
+  createChildLogger,
   MessageData,
   Message,
   UserJoinedPayload,
@@ -9,7 +9,7 @@ import type {
   UserInfo,
   ServerToClientEvents,
   ClientToServerEvents,
-} from '@shared/types';
+} from '@chat-app/shared';
 
 // Type-safe socket types
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;

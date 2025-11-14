@@ -1,8 +1,8 @@
 .PHONY: dev dev-build dev-down prod prod-build prod-down logs clean help
 
 # Development commands
-dev: ## Start development environment with hot-reloading
-	docker-compose -f docker-compose.dev.yml up
+reset: ## Start development environment with hot-reloading
+	make dev-down && make dev-build
 
 dev-build: ## Build and start development environment
 	docker-compose -f docker-compose.dev.yml up --build

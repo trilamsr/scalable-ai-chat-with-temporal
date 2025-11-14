@@ -3,8 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { initializeSocket } from './socket';
-import logger from '@shared/logger';
-import type { ServerToClientEvents, ClientToServerEvents } from '@shared/types';
+import { logger, ServerToClientEvents, ClientToServerEvents } from '@chat-app/shared';
 
 const app = express();
 const server = http.createServer(app);

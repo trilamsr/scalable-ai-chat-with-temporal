@@ -3,35 +3,34 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy and install shared dependencies first
+# Copy root package.json for workspace configuration
+COPY package.json ./
+
+# Copy package files for all workspaces
 COPY shared/package*.json ./shared/
-WORKDIR /app/shared
-RUN npm install
-
-# Copy shared source files
-COPY shared/src ./src
-COPY shared/tsconfig.json ./
-
-# Switch back to /app and copy frontend package files
-WORKDIR /app
 COPY frontend/package*.json ./frontend/
 
-# Install frontend dependencies
-WORKDIR /app/frontend
+# Install all dependencies (workspaces will be linked automatically)
 RUN npm install --legacy-peer-deps
 
+# Copy shared source and config
+COPY shared/src ./shared/src
+COPY shared/tsconfig.json ./shared/
+
 # Copy frontend configuration files
-COPY frontend/tsconfig.json ./
-COPY frontend/craco.config.js ./
-COPY frontend/tailwind.config.js ./
-COPY frontend/postcss.config.js ./
+COPY frontend/tsconfig.json ./frontend/
+COPY frontend/tailwind.config.js ./frontend/
+COPY frontend/postcss.config.js ./frontend/
 
 # Copy frontend source files
-COPY frontend/src ./src
-COPY frontend/public ./public
+COPY frontend/src ./frontend/src
+COPY frontend/public ./frontend/public
 
 # Expose React dev server port
 EXPOSE 3000
+
+# Set working directory to frontend
+WORKDIR /app/frontend
 
 # Start React development server
 CMD ["npm", "start"]

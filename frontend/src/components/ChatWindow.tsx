@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { createChildLogger } from '@shared/logger';
-import type { Message, UserInfo, UserJoinedPayload, UserLeftPayload, UserTypingPayload } from '@shared/types';
-import { ChatWindowProps } from 'src/types';
+import { createChildLogger, Message, UserInfo, UserJoinedPayload, UserLeftPayload, UserTypingPayload } from '@chat-app/shared';
+import { ChatWindowProps } from '../types';
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, color }) => {
   const [messages, setMessages] = useState<Message[]>([]);

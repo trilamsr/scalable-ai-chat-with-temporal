@@ -14,6 +14,8 @@ services:
       - FRONTEND_URL=http://localhost:3000
       - LOG_LEVEL=debug
     volumes:
+      # Mount root package.json for workspace configuration
+      - ./package.json:/app/package.json:delegated
       # Mount source code for hot-reloading
       - ./backend/src:/app/backend/src:delegated
       - ./backend/package.json:/app/backend/package.json:delegated
@@ -23,6 +25,7 @@ services:
       - ./shared/package.json:/app/shared/package.json:delegated
       - ./shared/tsconfig.json:/app/shared/tsconfig.json:delegated
       # Keep node_modules in container (don't overwrite with host)
+      - /app/node_modules
       - /app/backend/node_modules
       - /app/shared/node_modules
     networks:
@@ -42,12 +45,13 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
     volumes:
+      # Mount root package.json for workspace configuration
+      - ./package.json:/app/package.json:delegated
       # Mount source code for hot-reloading
       - ./frontend/src:/app/frontend/src:delegated
       - ./frontend/public:/app/frontend/public:delegated
       - ./frontend/package.json:/app/frontend/package.json:delegated
       - ./frontend/tsconfig.json:/app/frontend/tsconfig.json:delegated
-      - ./frontend/craco.config.js:/app/frontend/craco.config.js:delegated
       - ./frontend/tailwind.config.js:/app/frontend/tailwind.config.js:delegated
       - ./frontend/postcss.config.js:/app/frontend/postcss.config.js:delegated
       # Mount shared folder
@@ -55,6 +59,7 @@ services:
       - ./shared/package.json:/app/shared/package.json:delegated
       - ./shared/tsconfig.json:/app/shared/tsconfig.json:delegated
       # Keep node_modules in container (don't overwrite with host)
+      - /app/node_modules
       - /app/frontend/node_modules
       - /app/shared/node_modules
     networks:

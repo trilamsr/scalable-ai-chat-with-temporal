@@ -1,0 +1,22 @@
+{
+  "name": "scalable-ai-chat-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Scalable AI Chat Application - Monorepo",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "install:all": "npm install",
+    "clean": "rm -rf node_modules frontend/node_modules backend/node_modules shared/node_modules",
+    "build:shared": "cd shared && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
