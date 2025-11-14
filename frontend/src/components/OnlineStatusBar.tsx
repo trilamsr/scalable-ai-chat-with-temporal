@@ -5,7 +5,10 @@ interface OnlineStatusBarProps {
   onlineUsers: UserInfo[];
 }
 
-const OnlineStatusBar: React.FC<OnlineStatusBarProps> = ({ onlineUsers }) => {
+/**
+ * Memoized OnlineStatusBar to prevent unnecessary re-renders
+ */
+const OnlineStatusBar: React.FC<OnlineStatusBarProps> = React.memo(({ onlineUsers }) => {
   return (
     <div className="px-4 py-2 bg-gray-100 border-b border-gray-200 text-sm text-gray-600 flex gap-2 items-center">
       <span className="font-semibold text-gray-700">Online ({onlineUsers.length}):</span>
@@ -14,6 +17,8 @@ const OnlineStatusBar: React.FC<OnlineStatusBarProps> = ({ onlineUsers }) => {
       </span>
     </div>
   );
-};
+});
+
+OnlineStatusBar.displayName = 'OnlineStatusBar';
 
 export default OnlineStatusBar;

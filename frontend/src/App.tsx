@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import ChatWindow from './components/ChatWindow';
+import ErrorBoundary from './components/ErrorBoundary';
 import { logger } from '@chat-app/shared';
 import { DEFAULT_BACKEND_URL } from './utils/constants';
 
@@ -49,27 +50,37 @@ const App: React.FC = () => {
   }, [userConfigs]);
 
   return (
-    <div className="min-h-screen p-5">
-      <header className="text-center text-white mb-8 p-5">
-        <h1 className="text-4xl font-bold mb-2 drop-shadow-lg">
-          Multi-Window Chat Application
-        </h1>
-        <p className="text-lg opacity-90">
-          Three independent chat clients connected to the same WebSocket server
-        </p>
-      </header>
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 max-w-[1800px] mx-auto">
-        {sockets.map((socket, index) => (
-          <ChatWindow
-            key={index}
-            socket={socket}
-            windowId={index + 1}
-            username={userConfigs[index].username}
-            color={userConfigs[index].color}
-          />
-        ))}
+    <ErrorBoundary>
+      <div className="min-h-screen p-5">
+        <header className="text-center text-white mb-8 p-5">
+          <h1 className="text-4xl font-bold mb-2 drop-shadow-lg">
+            Multi-Window Chat Application
+          </h1>
+          <p className="text-lg opacity-90">
+            Three independent chat clients connected to the same WebSocket server
+          </p>
+        </header>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 max-w-[1800px] mx-auto">
+          {sockets.map((socket, index) => (
+            <ErrorBoundary
+              key={index}
+              fallback={
+                <div className="bg-red-50 p-4 rounded-lg border-2 border-red-200">
+                  <p className="text-red-900 font-semibold">Chat window {index + 1} encountered an error</p>
+                </div>
+              }
+            >
+              <ChatWindow
+                socket={socket}
+                windowId={index + 1}
+                username={userConfigs[index].username}
+                color={userConfigs[index].color}
+              />
+            </ErrorBoundary>
+          ))}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 };
 

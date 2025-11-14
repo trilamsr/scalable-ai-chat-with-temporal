@@ -33,16 +33,11 @@ redis.on('close', () => { redisLogger.warn('Redis client connection closed')});
 redis.on('reconnecting', () => { redisLogger.info('Redis client reconnecting')});
 
 /**
- * Graceful shutdown
+ * Graceful shutdown handler for Redis
+ * Exported to be called by main server shutdown coordinator
  */
-process.on('SIGINT', async () => {
+export async function shutdownRedis(): Promise<void> {
   redisLogger.info('Shutting down Redis client');
   await redis.quit();
-  process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-  redisLogger.info('Shutting down Redis client');
-  await redis.quit();
-  process.exit(0);
-});
+  redisLogger.info('Redis client closed');
+}

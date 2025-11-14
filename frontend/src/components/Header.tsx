@@ -7,7 +7,10 @@ interface HeaderProps {
   username: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ windowId, color, isConnected, username }) => {
+/**
+ * Memoized Header to prevent unnecessary re-renders
+ */
+const Header: React.FC<HeaderProps> = React.memo(({ windowId, color, isConnected, username }) => {
   return (
     <div
       className="p-4 text-white flex flex-wrap justify-between items-center gap-2"
@@ -23,6 +26,8 @@ const Header: React.FC<HeaderProps> = ({ windowId, color, isConnected, username 
       </div>
     </div>
   );
-};
+});
+
+Header.displayName = 'Header';
 
 export default Header;

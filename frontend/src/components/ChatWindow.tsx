@@ -5,12 +5,10 @@ import Header from './Header';
 import OnlineStatusBar from './OnlineStatusBar';
 import MessagesContainer from './MessagesContainer';
 import MessageInputForm from './MessageInputForm';
-import {
-  useChatMessages,
-  useSocketConnection,
-  useOnlineUsers,
-  useTypingIndicator,
-} from '../hooks/useChatWindow';
+import { useChatMessages } from '../hooks/useChatMessages';
+import { useSocketConnection } from '../hooks/useSocketConnection';
+import { useOnlineUsers } from '../hooks/useOnlineUsers';
+import { useTypingIndicator } from '../hooks/useTypingIndicator';
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, color }) => {
   const [inputMessage, setInputMessage] = useState<string>('');

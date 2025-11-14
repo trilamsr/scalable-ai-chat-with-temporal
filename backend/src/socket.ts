@@ -6,32 +6,19 @@ import {
   UserJoinedPayload,
   UserLeftPayload,
   UserTypingPayload,
-  UserInfo,
   ServerToClientEvents,
   ClientToServerEvents,
 } from '@chat-app/shared';
 import { chatHistory } from './chatHistory';
 import { getErrorMessage } from './utils/errorHelpers';
+import { userManager } from './UserManager';
 
 // Type-safe socket types
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
-// Store connected users
-const connectedUsers = new Map<string, string>();
-
 // Create a logger for socket events
 const socketLogger = createChildLogger({ module: 'socket' });
-
-/**
- * Get list of all connected users
- */
-const getUsersList = (): UserInfo[] => {
-  return Array.from(connectedUsers.entries()).map(([id, name]) => ({
-    id,
-    name,
-  }));
-};
 
 /**
  * Socket event handlers class
@@ -50,11 +37,8 @@ class SocketHandlers {
    * Handle user joining the chat
    */
   public onJoin = (username: string): void => {
-    connectedUsers.set(this.socket.id, username);
-    socketLogger.info(
-      { username, socketId: this.socket.id, totalUsers: connectedUsers.size },
-      'User joined'
-    );
+    userManager.addUser(this.socket.id, username);
+    socketLogger.info({ username, socketId: this.socket.id }, 'User joined');
 
     // Broadcast to all clients that a new user joined
     const payload: UserJoinedPayload = {
@@ -65,7 +49,7 @@ class SocketHandlers {
     this.io.emit('user_joined', payload);
 
     // Send current users list
-    const usersList = getUsersList();
+    const usersList = userManager.getUsersList();
     this.io.emit('users_list', usersList);
   };
 
@@ -73,7 +57,7 @@ class SocketHandlers {
    * Handle incoming message
    */
   public onSendMessage = async (data: MessageData): Promise<void> => {
-    const username = connectedUsers.get(this.socket.id) || 'Anonymous';
+    const username = userManager.getUsername(this.socket.id);
 
     const message: Message = {
       id: `${Date.now()}-${this.socket.id}`,
@@ -107,8 +91,8 @@ class SocketHandlers {
    * Handle typing indicator
    */
   public onTyping = (isTyping: boolean): void => {
-    const username = connectedUsers.get(this.socket.id);
-    if (username) {
+    if (userManager.isUserConnected(this.socket.id)) {
+      const username = userManager.getUsername(this.socket.id);
       socketLogger.debug(
         { username, socketId: this.socket.id, isTyping },
         'User typing status'
@@ -126,7 +110,7 @@ class SocketHandlers {
    * Handle chat history request
    */
   public onGetHistory = async (count?: number): Promise<void> => {
-    const username = connectedUsers.get(this.socket.id);
+    const username = userManager.getUsername(this.socket.id);
     socketLogger.info(
       { username, socketId: this.socket.id, requestedCount: count },
       'Chat history requested'
@@ -153,13 +137,8 @@ class SocketHandlers {
    * Handle user disconnection
    */
   public onDisconnect = (): void => {
-    const username = connectedUsers.get(this.socket.id);
-    connectedUsers.delete(this.socket.id);
-
-    socketLogger.info(
-      { username, socketId: this.socket.id, totalUsers: connectedUsers.size },
-      'User disconnected'
-    );
+    const username = userManager.removeUser(this.socket.id);
+    socketLogger.info({ username, socketId: this.socket.id }, 'User disconnected');
 
     if (username) {
       const payload: UserLeftPayload = {
@@ -171,7 +150,7 @@ class SocketHandlers {
     }
 
     // Send updated users list
-    const usersList = getUsersList();
+    const usersList = userManager.getUsersList();
     this.io.emit('users_list', usersList);
   };
 
@@ -204,5 +183,5 @@ export const initializeSocket = (io: TypedServer): void => {
  * Get count of connected users
  */
 export const getConnectedUsersCount = (): number => {
-  return connectedUsers.size;
+  return userManager.getUserCount();
 };

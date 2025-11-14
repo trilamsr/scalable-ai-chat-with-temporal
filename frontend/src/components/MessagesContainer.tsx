@@ -10,14 +10,17 @@ interface MessagesContainerProps {
   isLoadingHistory?: boolean;
 }
 
-const MessagesContainer: React.FC<MessagesContainerProps> = ({
+/**
+ * Memoized MessagesContainer to prevent unnecessary re-renders
+ * Only re-renders when messages, username, typingUsers, or isLoadingHistory change
+ */
+const MessagesContainer: React.FC<MessagesContainerProps> = React.memo(({
   messages,
   username,
   typingUsers,
   messagesEndRef,
   isLoadingHistory = false,
 }) => {
-
   return (
     <div className="flex-1 overflow-y-auto p-5 bg-gray-50 flex flex-col gap-3">
       {isLoadingHistory && (
@@ -59,6 +62,8 @@ const MessagesContainer: React.FC<MessagesContainerProps> = ({
       <div ref={messagesEndRef} />
     </div>
   );
-};
+});
+
+MessagesContainer.displayName = 'MessagesContainer';
 
 export default MessagesContainer;

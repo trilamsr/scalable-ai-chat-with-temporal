@@ -1,6 +1,6 @@
 import { redis } from './redis';
 import { Message, createChildLogger } from '@chat-app/shared';
-import { getErrorMessage } from './utils/errorHelpers';
+import { handleRedisError } from './utils/errorHelpers';
 import { REDIS_KEYS, CHAT_HISTORY } from './utils/constants';
 
 const historyLogger = createChildLogger({ module: 'chat-history' });
@@ -34,11 +34,8 @@ export class ChatHistoryService {
 
       return streamId;
     } catch (error) {
-      historyLogger.error(
-        { error: getErrorMessage(error), messageId: message.id },
-        'Failed to add message to history'
-      );
-      throw error;
+      handleRedisError(historyLogger, error, { messageId: message.id }, 'Failed to add message to history');
+      return null;
     }
   }
 
@@ -81,11 +78,8 @@ export class ChatHistoryService {
 
       return messages;
     } catch (error) {
-      historyLogger.error(
-        { error: getErrorMessage(error) },
-        'Failed to retrieve message history'
-      );
-      throw error;
+      handleRedisError(historyLogger, error, {}, 'Failed to retrieve message history');
+      return [];
     }
   }
 
@@ -98,10 +92,7 @@ export class ChatHistoryService {
       const length = await redis.xlen(REDIS_KEYS.CHAT_MESSAGES);
       return length;
     } catch (error) {
-      historyLogger.error(
-        { error: getErrorMessage(error) },
-        'Failed to get message count'
-      );
+      handleRedisError(historyLogger, error, {}, 'Failed to get message count', false);
       return 0;
     }
   }
@@ -117,10 +108,7 @@ export class ChatHistoryService {
       await redis.xtrim(REDIS_KEYS.CHAT_MESSAGES, 'MAXLEN', '~', maxLength);
       historyLogger.info({ maxLength }, 'Chat history trimmed');
     } catch (error) {
-      historyLogger.error(
-        { error: getErrorMessage(error) },
-        'Failed to trim chat history'
-      );
+      handleRedisError(historyLogger, error, {}, 'Failed to trim chat history', false);
     }
   }
 
@@ -133,11 +121,7 @@ export class ChatHistoryService {
       await redis.del(REDIS_KEYS.CHAT_MESSAGES);
       historyLogger.warn('Chat history cleared');
     } catch (error) {
-      historyLogger.error(
-        { error: getErrorMessage(error) },
-        'Failed to clear chat history'
-      );
-      throw error;
+      handleRedisError(historyLogger, error, {}, 'Failed to clear chat history');
     }
   }
 }
