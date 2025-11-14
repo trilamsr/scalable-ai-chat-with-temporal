@@ -34,23 +34,28 @@ class SocketHandlers {
   }
 
   /**
-   * Handle user joining the chat
+   * Handle user joining the chat room
    */
-  public onJoin = (username: string): void => {
-    userManager.addUser(this.socket.id, username);
-    socketLogger.info({ username, socketId: this.socket.id }, 'User joined');
+  public onJoin = (username: string, roomId: string): void => {
+    // Join the Socket.IO room
+    this.socket.join(roomId);
 
-    // Broadcast to all clients that a new user joined
+    // Add user to manager
+    userManager.addUser(this.socket.id, username, roomId);
+    socketLogger.info({ username, socketId: this.socket.id, roomId }, 'User joined room');
+
+    // Broadcast to room that a new user joined
     const payload: UserJoinedPayload = {
       username,
       userId: this.socket.id,
       timestamp: new Date().toISOString(),
+      roomId,
     };
-    this.io.emit('user_joined', payload);
+    this.io.to(roomId).emit('user_joined', payload);
 
-    // Send current users list
-    const usersList = userManager.getUsersList();
-    this.io.emit('users_list', usersList);
+    // Send current users list for this room
+    const usersList = userManager.getUsersList(roomId);
+    this.io.to(roomId).emit('users_list', usersList);
   };
 
   /**
@@ -58,6 +63,12 @@ class SocketHandlers {
    */
   public onSendMessage = async (data: MessageData): Promise<void> => {
     const username = userManager.getUsername(this.socket.id);
+    const roomId = userManager.getRoomId(this.socket.id);
+
+    if (!roomId) {
+      socketLogger.warn({ socketId: this.socket.id }, 'Message from user not in a room');
+      return;
+    }
 
     const message: Message = {
       id: `${Date.now()}-${this.socket.id}`,
@@ -65,10 +76,11 @@ class SocketHandlers {
       userId: this.socket.id,
       text: data.text,
       timestamp: new Date().toISOString(),
+      roomId,
     };
 
     socketLogger.info(
-      { messageId: message.id, username, socketId: this.socket.id, textLength: data.text.length },
+      { messageId: message.id, username, socketId: this.socket.id, roomId, textLength: data.text.length },
       'Message received'
     );
 
@@ -83,8 +95,8 @@ class SocketHandlers {
       // Continue even if history save fails
     }
 
-    // Broadcast message to all connected clients
-    this.io.emit('receive_message', message);
+    // Broadcast message to room only
+    this.io.to(roomId).emit('receive_message', message);
   };
 
   /**
@@ -93,16 +105,22 @@ class SocketHandlers {
   public onTyping = (isTyping: boolean): void => {
     if (userManager.isUserConnected(this.socket.id)) {
       const username = userManager.getUsername(this.socket.id);
+      const roomId = userManager.getRoomId(this.socket.id);
+
+      if (!roomId) return;
+
       socketLogger.debug(
-        { username, socketId: this.socket.id, isTyping },
+        { username, socketId: this.socket.id, roomId, isTyping },
         'User typing status'
       );
       const payload: UserTypingPayload = {
         username,
         userId: this.socket.id,
         isTyping,
+        roomId,
       };
-      this.socket.broadcast.emit('user_typing', payload);
+      // Broadcast to room only (excluding sender)
+      this.socket.to(roomId).emit('user_typing', payload);
     }
   };
 
@@ -111,16 +129,24 @@ class SocketHandlers {
    */
   public onGetHistory = async (count?: number): Promise<void> => {
     const username = userManager.getUsername(this.socket.id);
+    const roomId = userManager.getRoomId(this.socket.id);
+
+    if (!roomId) {
+      socketLogger.warn({ socketId: this.socket.id }, 'History request from user not in a room');
+      this.socket.emit('chat_history', []);
+      return;
+    }
+
     socketLogger.info(
-      { username, socketId: this.socket.id, requestedCount: count },
+      { username, socketId: this.socket.id, roomId, requestedCount: count },
       'Chat history requested'
     );
 
     try {
-      const messages = await chatHistory.getRecentMessages(count);
+      const messages = await chatHistory.getRecentMessages(roomId, count);
       this.socket.emit('chat_history', messages);
       socketLogger.debug(
-        { username, socketId: this.socket.id, messagesReturned: messages.length },
+        { username, socketId: this.socket.id, roomId, messagesReturned: messages.length },
         'Chat history sent'
       );
     } catch (error) {
@@ -137,21 +163,26 @@ class SocketHandlers {
    * Handle user disconnection
    */
   public onDisconnect = (): void => {
-    const username = userManager.removeUser(this.socket.id);
-    socketLogger.info({ username, socketId: this.socket.id }, 'User disconnected');
+    const userData = userManager.removeUser(this.socket.id);
 
-    if (username) {
+    if (userData) {
+      const { username, roomId } = userData;
+      socketLogger.info({ username, socketId: this.socket.id, roomId }, 'User disconnected from room');
+
       const payload: UserLeftPayload = {
         username,
         userId: this.socket.id,
         timestamp: new Date().toISOString(),
+        roomId,
       };
-      this.io.emit('user_left', payload);
-    }
+      this.io.to(roomId).emit('user_left', payload);
 
-    // Send updated users list
-    const usersList = userManager.getUsersList();
-    this.io.emit('users_list', usersList);
+      // Send updated users list for this room
+      const usersList = userManager.getUsersList(roomId);
+      this.io.to(roomId).emit('users_list', usersList);
+    } else {
+      socketLogger.info({ socketId: this.socket.id }, 'User disconnected (no room data)');
+    }
   };
 
   /**

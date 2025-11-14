@@ -10,4 +10,5 @@ export interface ChatWindowProps {
   windowId: number;
   username: string;
   color: string;
+  roomId: string;
 }

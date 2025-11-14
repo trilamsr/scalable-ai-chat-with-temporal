@@ -42,13 +42,13 @@ export function useChatMessages(socket: TypedSocket, logger: ILogger): UseChatMe
 
     const handleUserJoined = (data: UserJoinedPayload) => {
       logger.info({ joinedUser: data.username }, 'User joined chat');
-      const systemMessage = createSystemMessage(data.username, 'joined', data.timestamp);
+      const systemMessage = createSystemMessage(data.username, 'joined', data.timestamp, data.roomId);
       setMessages((prevMessages) => [...prevMessages, systemMessage]);
     };
 
     const handleUserLeft = (data: UserLeftPayload) => {
       logger.info({ leftUser: data.username }, 'User left chat');
-      const systemMessage = createSystemMessage(data.username, 'left', data.timestamp);
+      const systemMessage = createSystemMessage(data.username, 'left', data.timestamp, data.roomId);
       setMessages((prevMessages) => [...prevMessages, systemMessage]);
     };
 

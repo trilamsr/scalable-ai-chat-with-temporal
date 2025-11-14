@@ -8,11 +8,13 @@ export interface BaseUserEvent {
   username: string;
   userId: string;
   timestamp: string;
+  roomId: string;
 }
 
 export interface UserInfo {
   id: string;
   name: string;
+  roomId: string;
 }
 
 // Socket event payloads
@@ -26,6 +28,7 @@ export interface UserTypingPayload extends Omit<BaseUserEvent, 'timestamp'> {
 // Message types
 export interface MessageData {
   text: string;
+  roomId: string;
 }
 
 export interface Message extends BaseUserEvent {
@@ -47,7 +50,7 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  join: (username: string) => void;
+  join: (username: string, roomId: string) => void;
   send_message: (data: MessageData) => void;
   typing: (isTyping: boolean) => void;
   get_history: (count?: number) => void;

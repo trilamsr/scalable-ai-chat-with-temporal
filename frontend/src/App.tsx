@@ -10,14 +10,15 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || DEFAULT_BACKEND_URL;
 interface UserConfig {
   username: string;
   color: string;
+  roomId: string;
 }
 
 const App: React.FC = () => {
   const [sockets, setSockets] = useState<Socket[]>([]);
   const [userConfigs] = useState<UserConfig[]>([
-    { username: 'User-Blue', color: '#3b82f6' },
-    { username: 'User-Green', color: '#10b981' },
-    { username: 'User-Purple', color: '#8b5cf6' }
+    { username: 'User-Blue', color: '#3b82f6', roomId: 'shared' },
+    { username: 'User-Green', color: '#10b981', roomId: 'shared' },
+    { username: 'User-Purple', color: '#8b5cf6', roomId: 'Purple' }
   ]);
 
   useEffect(() => {
@@ -54,10 +55,10 @@ const App: React.FC = () => {
       <div className="min-h-screen p-5">
         <header className="text-center text-white mb-8 p-5">
           <h1 className="text-4xl font-bold mb-2 drop-shadow-lg">
-            Multi-Window Chat Application
+            Multi-Room Chat Application
           </h1>
           <p className="text-lg opacity-90">
-            Three independent chat clients connected to the same WebSocket server
+            Three independent chat rooms with isolated conversations
           </p>
         </header>
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 max-w-[1800px] mx-auto">
@@ -75,6 +76,7 @@ const App: React.FC = () => {
                 windowId={index + 1}
                 username={userConfigs[index].username}
                 color={userConfigs[index].color}
+                roomId={userConfigs[index].roomId}
               />
             </ErrorBoundary>
           ))}

@@ -10,19 +10,19 @@ import { useSocketConnection } from '../hooks/useSocketConnection';
 import { useOnlineUsers } from '../hooks/useOnlineUsers';
 import { useTypingIndicator } from '../hooks/useTypingIndicator';
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, color }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, color, roomId }) => {
   const [inputMessage, setInputMessage] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Create a logger specific to this chat window
   const logger = useMemo(
-    () => createChildLogger({ component: 'ChatWindow', windowId, username }),
-    [windowId, username]
+    () => createChildLogger({ component: 'ChatWindow', windowId, username, roomId }),
+    [windowId, username, roomId]
   );
 
   // Custom hooks for managing chat functionality
   const { messages, isLoadingHistory, requestHistory } = useChatMessages(socket, logger);
-  const { isConnected } = useSocketConnection(socket, username, logger, requestHistory);
+  const { isConnected } = useSocketConnection(socket, username, roomId, logger, requestHistory);
   const { onlineUsers } = useOnlineUsers(socket, logger);
   const { typingUsers, handleInputChange: handleTypingInputChange, clearTypingOnSubmit } = useTypingIndicator(
     socket,
@@ -42,7 +42,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
     e.preventDefault();
     if (inputMessage.trim() && socket && isConnected) {
       logger.info({ textLength: inputMessage.length }, 'Sending message');
-      socket.emit('send_message', { text: inputMessage });
+      socket.emit('send_message', { text: inputMessage, roomId });
       setInputMessage('');
       clearTypingOnSubmit();
     }
@@ -57,7 +57,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
       className="flex flex-col h-full bg-white rounded-lg shadow-lg overflow-hidden border-t-4"
       style={{ borderTopColor: color }}
     >
-      <Header windowId={windowId} color={color} isConnected={isConnected} username={username} />
+      <Header windowId={windowId} color={color} isConnected={isConnected} username={username} roomId={roomId} />
       <OnlineStatusBar onlineUsers={onlineUsers} />
       <MessagesContainer
         messages={messages}

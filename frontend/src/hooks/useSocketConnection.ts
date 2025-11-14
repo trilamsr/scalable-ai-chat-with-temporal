@@ -5,7 +5,7 @@ import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHel
 
 /**
  * Hook for managing socket connection lifecycle
- * Handles connect/disconnect events and user join
+ * Handles connect/disconnect events and user join with room support
  */
 export interface UseSocketConnectionResult {
   isConnected: boolean;
@@ -14,6 +14,7 @@ export interface UseSocketConnectionResult {
 export function useSocketConnection(
   socket: TypedSocket,
   username: string,
+  roomId: string,
   logger: ILogger,
   onConnect?: () => void
 ): UseSocketConnectionResult {
@@ -24,8 +25,8 @@ export function useSocketConnection(
 
     const handleConnect = () => {
       setIsConnected(true);
-      logger.info('Connected to server');
-      socket.emit('join', username);
+      logger.info({ roomId }, 'Connected to server, joining room');
+      socket.emit('join', username, roomId);
       onConnect?.();
     };
 
@@ -48,7 +49,7 @@ export function useSocketConnection(
     return () => {
       unregisterSocketEvents(socket, eventMap);
     };
-  }, [socket, username, logger, onConnect]);
+  }, [socket, username, roomId, logger, onConnect]);
 
   return { isConnected };
 }

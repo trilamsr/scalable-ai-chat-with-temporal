@@ -4,7 +4,8 @@ import { SYSTEM_USER } from './constants';
 export function createSystemMessage(
   username: string,
   action: string,
-  timestamp: string
+  timestamp: string,
+  roomId: string
 ): Message {
   return {
     id: `${username}-${action}-${timestamp}`,
@@ -12,6 +13,7 @@ export function createSystemMessage(
     userId: SYSTEM_USER.USER_ID,
     text: `${username} ${action} the chat`,
     timestamp,
+    roomId,
     isSystem: true,
   };
 }

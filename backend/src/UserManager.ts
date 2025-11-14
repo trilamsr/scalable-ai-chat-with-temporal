@@ -2,12 +2,17 @@ import { UserInfo, createChildLogger } from '@chat-app/shared';
 
 const userLogger = createChildLogger({ module: 'user-manager' });
 
+interface UserData {
+  username: string;
+  roomId: string;
+}
+
 /**
  * Manages connected users and their information
- * Provides centralized user state management
+ * Provides centralized user state management with room support
  */
 export class UserManager {
-  private connectedUsers: Map<string, string>;
+  private connectedUsers: Map<string, UserData>;
 
   constructor() {
     this.connectedUsers = new Map();
@@ -17,32 +22,33 @@ export class UserManager {
    * Add a user to the connected users list
    * @param socketId - Socket ID of the user
    * @param username - Username of the user
+   * @param roomId - Room the user is joining
    */
-  addUser(socketId: string, username: string): void {
-    this.connectedUsers.set(socketId, username);
+  addUser(socketId: string, username: string, roomId: string): void {
+    this.connectedUsers.set(socketId, { username, roomId });
     userLogger.info(
-      { username, socketId, totalUsers: this.connectedUsers.size },
-      'User added'
+      { username, socketId, roomId, totalUsers: this.connectedUsers.size },
+      'User added to room'
     );
   }
 
   /**
    * Remove a user from the connected users list
    * @param socketId - Socket ID of the user
-   * @returns Username of the removed user, or undefined if not found
+   * @returns UserData of the removed user, or undefined if not found
    */
-  removeUser(socketId: string): string | undefined {
-    const username = this.connectedUsers.get(socketId);
+  removeUser(socketId: string): UserData | undefined {
+    const userData = this.connectedUsers.get(socketId);
     this.connectedUsers.delete(socketId);
 
-    if (username) {
+    if (userData) {
       userLogger.info(
-        { username, socketId, totalUsers: this.connectedUsers.size },
-        'User removed'
+        { username: userData.username, socketId, roomId: userData.roomId, totalUsers: this.connectedUsers.size },
+        'User removed from room'
       );
     }
 
-    return username;
+    return userData;
   }
 
   /**
@@ -51,26 +57,52 @@ export class UserManager {
    * @returns Username, or 'Anonymous' if not found
    */
   getUsername(socketId: string): string {
-    return this.connectedUsers.get(socketId) || 'Anonymous';
+    return this.connectedUsers.get(socketId)?.username || 'Anonymous';
   }
 
   /**
-   * Get list of all connected users
+   * Get room for a given socket ID
+   * @param socketId - Socket ID to look up
+   * @returns Room name, or undefined if not found
+   */
+  getRoomId(socketId: string): string | undefined {
+    return this.connectedUsers.get(socketId)?.roomId;
+  }
+
+  /**
+   * Get user data for a given socket ID
+   * @param socketId - Socket ID to look up
+   * @returns UserData or undefined if not found
+   */
+  getUserData(socketId: string): UserData | undefined {
+    return this.connectedUsers.get(socketId);
+  }
+
+  /**
+   * Get list of all connected users in a specific room
+   * @param roomId - Room name to filter by (optional - returns all if not provided)
    * @returns Array of UserInfo objects
    */
-  getUsersList(): UserInfo[] {
-    return Array.from(this.connectedUsers.entries()).map(([id, name]) => ({
-      id,
-      name,
-    }));
+  getUsersList(roomId?: string): UserInfo[] {
+    return Array.from(this.connectedUsers.entries())
+      .filter(([_, userData]) => !roomId || userData.roomId === roomId)
+      .map(([id, userData]) => ({
+        id,
+        name: userData.username,
+        roomId: userData.roomId,
+      }));
   }
 
   /**
    * Get total number of connected users
+   * @param roomId - Room name to filter by (optional - returns all if not provided)
    * @returns User count
    */
-  getUserCount(): number {
-    return this.connectedUsers.size;
+  getUserCount(roomId?: string): number {
+    if (!roomId) {
+      return this.connectedUsers.size;
+    }
+    return Array.from(this.connectedUsers.values()).filter(userData => userData.roomId === roomId).length;
   }
 
   /**
