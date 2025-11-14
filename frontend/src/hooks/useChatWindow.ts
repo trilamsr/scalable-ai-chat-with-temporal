@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Message, UserInfo, UserJoinedPayload, UserLeftPayload, UserTypingPayload } from '@chat-app/shared';
 import { TypedSocket } from '../types';
 import { createSystemMessage } from '../utils/messageHelpers';
@@ -16,6 +16,14 @@ export function useChatMessages(socket: TypedSocket, logger: any): UseChatMessag
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const historyLoadedRef = useRef<boolean>(false);
+
+  const requestHistory = useCallback(() => {
+    if (!historyLoadedRef.current && socket) {
+      setIsLoadingHistory(true);
+      logger.info('Requesting chat history');
+      socket.emit('get_history', CHAT_CONFIG.HISTORY_REQUEST_COUNT);
+    }
+  }, [socket, logger]);
 
   useEffect(() => {
     if (!socket) return;
@@ -71,14 +79,6 @@ export function useChatMessages(socket: TypedSocket, logger: any): UseChatMessag
       unregisterSocketEvents(socket, eventMap);
     };
   }, [socket, logger]);
-
-  const requestHistory = () => {
-    if (!historyLoadedRef.current && socket) {
-      setIsLoadingHistory(true);
-      logger.info('Requesting chat history');
-      socket.emit('get_history', CHAT_CONFIG.HISTORY_REQUEST_COUNT);
-    }
-  };
 
   return { messages, isLoadingHistory, setMessages, requestHistory };
 }
