@@ -112,4 +112,5 @@ export interface ClientToServerEvents {
   send_message: (data: MessageData, callback: (ack: MessageAck) => void) => void;
   typing: (isTyping: boolean) => void;
   get_history: (count?: number) => void;
+  clear_history: (roomId: string, callback?: (response: { success: boolean; error?: string }) => void) => void;
 }

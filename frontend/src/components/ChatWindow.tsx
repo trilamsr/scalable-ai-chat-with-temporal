@@ -86,12 +86,29 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
     handleTypingInputChange(e, setInputMessage);
   };
 
+  const handleClearHistory = () => {
+    if (!socket || !isConnected) return;
+
+    logger.warn({ roomId }, 'Clearing chat history');
+
+    socket.emit('clear_history', roomId, (response) => {
+      if (response?.success) {
+        logger.info({ roomId }, 'Chat history cleared successfully');
+        // Clear local messages
+        setMessages([]);
+      } else {
+        logger.error({ error: response?.error }, 'Failed to clear chat history');
+        alert('Failed to clear chat history. Please try again.');
+      }
+    });
+  };
+
   return (
     <div
       className="flex flex-col h-full bg-white rounded-lg shadow-lg overflow-hidden border-t-4"
       style={{ borderTopColor: color }}
     >
-      <Header windowId={windowId} color={color} isConnected={isConnected} username={username} roomId={roomId} />
+      <Header windowId={windowId} color={color} isConnected={isConnected} username={username} roomId={roomId} onClearHistory={handleClearHistory} />
       <OnlineStatusBar onlineUsers={onlineUsers} />
       <MessagesContainer
         messages={allMessages}

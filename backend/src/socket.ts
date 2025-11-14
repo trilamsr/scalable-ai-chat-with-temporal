@@ -264,6 +264,34 @@ class SocketHandlers {
   };
 
   /**
+   * Handle clear history request
+   */
+  public onClearHistory = async (
+    roomId: string,
+    callback?: (response: { success: boolean; error?: string }) => void
+  ): Promise<void> => {
+    const username = this.services.userManager.getUsername(this.socket.id);
+
+    socketLogger.warn({ username, socketId: this.socket.id, roomId }, 'Clear history requested');
+
+    try {
+      await this.services.chatHistory.clearHistory(roomId);
+
+      // Broadcast to all users in the room that history was cleared
+      this.io.to(roomId).emit('chat_history', []);
+
+      callback?.({ success: true });
+
+      socketLogger.info({ username, socketId: this.socket.id, roomId }, 'Chat history cleared successfully');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      socketLogger.error({ error: errorMessage, roomId }, 'Failed to clear chat history');
+
+      callback?.({ success: false, error: 'Failed to clear history' });
+    }
+  };
+
+  /**
    * Register all event handlers to the socket
    */
   public registerHandlers(): void {
@@ -271,6 +299,7 @@ class SocketHandlers {
     this.socket.on('send_message', this.onSendMessage);
     this.socket.on('typing', this.onTyping);
     this.socket.on('get_history', this.onGetHistory);
+    this.socket.on('clear_history', this.onClearHistory);
     this.socket.on('disconnect', this.onDisconnect);
   }
 }
