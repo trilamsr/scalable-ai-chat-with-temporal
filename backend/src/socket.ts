@@ -1,46 +1,25 @@
 import { Server, Socket } from 'socket.io';
 import { createChildLogger } from './logger';
+import type {
+  MessageData,
+  Message,
+  UserJoinedPayload,
+  UserLeftPayload,
+  UserTypingPayload,
+  UserInfo,
+  ServerToClientEvents,
+  ClientToServerEvents,
+} from './types';
+
+// Type-safe socket types
+type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
+type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 // Store connected users
 const connectedUsers = new Map<string, string>();
 
 // Create a logger for socket events
 const socketLogger = createChildLogger({ module: 'socket' });
-
-interface MessageData {
-  text: string;
-}
-
-interface UserJoinedPayload {
-  username: string;
-  userId: string;
-  timestamp: string;
-}
-
-interface UserLeftPayload {
-  username: string;
-  userId: string;
-  timestamp: string;
-}
-
-interface Message {
-  id: string;
-  username: string;
-  userId: string;
-  text: string;
-  timestamp: string;
-}
-
-interface UserTypingPayload {
-  username: string;
-  userId: string;
-  isTyping: boolean;
-}
-
-interface UserInfo {
-  id: string;
-  name: string;
-}
 
 /**
  * Get list of all connected users
@@ -53,109 +32,130 @@ const getUsersList = (): UserInfo[] => {
 };
 
 /**
- * Create socket event handlers with access to socket and io instances
+ * Socket event handlers class
+ * Encapsulates all socket event handling logic for a single connection
  */
-export const createSocketHandlers = (io: Server, socket: Socket) => {
-  const onJoin = (username: string): void => {
-    connectedUsers.set(socket.id, username);
+class SocketHandlers {
+  private io: TypedServer;
+  private socket: TypedSocket;
+
+  constructor(io: TypedServer, socket: TypedSocket) {
+    this.io = io;
+    this.socket = socket;
+  }
+
+  /**
+   * Handle user joining the chat
+   */
+  public onJoin = (username: string): void => {
+    connectedUsers.set(this.socket.id, username);
     socketLogger.info(
-      { username, socketId: socket.id, totalUsers: connectedUsers.size },
+      { username, socketId: this.socket.id, totalUsers: connectedUsers.size },
       'User joined'
     );
 
     // Broadcast to all clients that a new user joined
     const payload: UserJoinedPayload = {
       username,
-      userId: socket.id,
+      userId: this.socket.id,
       timestamp: new Date().toISOString(),
     };
-    io.emit('user_joined', payload);
+    this.io.emit('user_joined', payload);
 
     // Send current users list
     const usersList = getUsersList();
-    io.emit('users_list', usersList);
+    this.io.emit('users_list', usersList);
   };
 
-  const onSendMessage = (data: MessageData): void => {
-    const username = connectedUsers.get(socket.id) || 'Anonymous';
+  /**
+   * Handle incoming message
+   */
+  public onSendMessage = (data: MessageData): void => {
+    const username = connectedUsers.get(this.socket.id) || 'Anonymous';
 
     const message: Message = {
-      id: `${Date.now()}-${socket.id}`,
+      id: `${Date.now()}-${this.socket.id}`,
       username,
-      userId: socket.id,
+      userId: this.socket.id,
       text: data.text,
       timestamp: new Date().toISOString(),
     };
 
     socketLogger.info(
-      { messageId: message.id, username, socketId: socket.id, textLength: data.text.length },
+      { messageId: message.id, username, socketId: this.socket.id, textLength: data.text.length },
       'Message received'
     );
 
     // Broadcast message to all connected clients
-    io.emit('receive_message', message);
+    this.io.emit('receive_message', message);
   };
 
-  const onTyping = (isTyping: boolean): void => {
-    const username = connectedUsers.get(socket.id);
+  /**
+   * Handle typing indicator
+   */
+  public onTyping = (isTyping: boolean): void => {
+    const username = connectedUsers.get(this.socket.id);
     if (username) {
       socketLogger.debug(
-        { username, socketId: socket.id, isTyping },
+        { username, socketId: this.socket.id, isTyping },
         'User typing status'
       );
       const payload: UserTypingPayload = {
         username,
-        userId: socket.id,
+        userId: this.socket.id,
         isTyping,
       };
-      socket.broadcast.emit('user_typing', payload);
+      this.socket.broadcast.emit('user_typing', payload);
     }
   };
 
-  const onDisconnect = (): void => {
-    const username = connectedUsers.get(socket.id);
-    connectedUsers.delete(socket.id);
+  /**
+   * Handle user disconnection
+   */
+  public onDisconnect = (): void => {
+    const username = connectedUsers.get(this.socket.id);
+    connectedUsers.delete(this.socket.id);
 
     socketLogger.info(
-      { username, socketId: socket.id, totalUsers: connectedUsers.size },
+      { username, socketId: this.socket.id, totalUsers: connectedUsers.size },
       'User disconnected'
     );
 
     if (username) {
       const payload: UserLeftPayload = {
         username,
-        userId: socket.id,
+        userId: this.socket.id,
         timestamp: new Date().toISOString(),
       };
-      io.emit('user_left', payload);
+      this.io.emit('user_left', payload);
     }
 
     // Send updated users list
     const usersList = getUsersList();
-    io.emit('users_list', usersList);
+    this.io.emit('users_list', usersList);
   };
 
-  return {
-    onJoin,
-    onSendMessage,
-    onTyping,
-    onDisconnect,
-  };
-};
+  /**
+   * Register all event handlers to the socket
+   */
+  public registerHandlers(): void {
+    this.socket.on('join', this.onJoin);
+    this.socket.on('send_message', this.onSendMessage);
+    this.socket.on('typing', this.onTyping);
+    this.socket.on('disconnect', this.onDisconnect);
+  }
+}
 
 /**
  * Initialize socket connection handlers
  */
-export const initializeSocket = (io: Server): void => {
-  io.on('connection', (socket: Socket) => {
+export const initializeSocket = (io: TypedServer): void => {
+  io.on('connection', (socket: TypedSocket) => {
     socketLogger.info({ socketId: socket.id }, 'New client connected');
 
-    const handlers = createSocketHandlers(io, socket);
-
-    socket.on('join', handlers.onJoin);
-    socket.on('send_message', handlers.onSendMessage);
-    socket.on('typing', handlers.onTyping);
-    socket.on('disconnect', handlers.onDisconnect);
+    // Create and register handlers for this connection
+    const handlers = new SocketHandlers(io, socket);
+    handlers.registerHandlers();
   });
 };
 

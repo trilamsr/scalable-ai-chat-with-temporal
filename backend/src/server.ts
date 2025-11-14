@@ -4,12 +4,13 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import { initializeSocket } from './socket';
 import logger from './logger';
+import type { ServerToClientEvents, ClientToServerEvents } from './types';
 
 const app = express();
 const server = http.createServer(app);
 
-// Configure CORS for Socket.io
-const io = new Server(server, {
+// Configure CORS for Socket.io with type-safe events
+const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: {
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     methods: ['GET', 'POST'],

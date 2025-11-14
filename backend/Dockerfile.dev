@@ -1,0 +1,20 @@
+# Development Dockerfile for Backend
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install all dependencies (including dev dependencies)
+RUN npm install
+
+# Copy source files
+COPY src ./src
+
+# Expose the WebSocket server port
+EXPOSE 4000
+
+# Run with nodemon for hot-reloading
+CMD ["npm", "run", "dev"]
