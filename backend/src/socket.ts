@@ -81,6 +81,32 @@ class SocketHandlers {
     const usersList = this.services.userManager.getUsersList(roomId);
     this.io.to(roomId).emit('users_list', usersList);
 
+    // If there's an active AI stream, send the current state to the newly joined user
+    const activeSession = this.services.aiStreamManager.getSession(roomId);
+    if (activeSession && activeSession.isActive) {
+      socketLogger.info(
+        { roomId, messageId: activeSession.messageId, username },
+        'Sending active AI stream state to newly joined user'
+      );
+
+      // Send start event
+      this.socket.emit('ai_stream_start', {
+        messageId: activeSession.messageId,
+        roomId,
+        timestamp: activeSession.startedAt.toISOString(),
+      });
+
+      // Send current accumulated text as a single chunk
+      if (activeSession.accumulatedText) {
+        this.socket.emit('ai_stream_chunk', {
+          messageId: activeSession.messageId,
+          roomId,
+          chunk: activeSession.accumulatedText,
+          accumulatedText: activeSession.accumulatedText,
+        });
+      }
+    }
+
     // Acknowledge success
     callback?.({ success: true });
   };
@@ -125,6 +151,30 @@ class SocketHandlers {
       },
       'Message processed'
     );
+
+    // Trigger AI response if no stream is currently active
+    if (!this.services.aiStreamManager.isStreamActive(message.roomId)) {
+      socketLogger.info({ roomId: message.roomId }, 'Triggering AI response');
+
+      // Get recent chat history for context
+      try {
+        const recentMessages = await this.services.chatHistory.getRecentMessages(message.roomId, 5);
+        const conversationHistory = recentMessages
+          .filter((msg) => !msg.isSystem)
+          .map((msg) => msg.text);
+
+        // Start AI streaming (non-blocking)
+        this.services.aiStreamManager
+          .startStream(this.io, message.roomId, message.text, conversationHistory)
+          .catch((error) => {
+            const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+            socketLogger.error({ error: errorMsg, roomId: message.roomId }, 'AI stream failed');
+          });
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        socketLogger.error({ error: errorMsg, roomId: message.roomId }, 'Failed to get chat history for AI');
+      }
+    }
   };
 
   /**

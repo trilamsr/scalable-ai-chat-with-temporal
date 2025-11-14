@@ -1,6 +1,8 @@
-import { ChatHistoryService } from '../chatHistory';
-import { UserManager } from '../UserManager';
-import { MessageService } from './MessageService';
+import { ChatHistoryService } from '../chatHistory.js';
+import { UserManager } from '../UserManager.js';
+import { MessageService } from './MessageService.js';
+import { AIService } from './AIService.js';
+import { AIStreamManager } from './AIStreamManager.js';
 import { createChildLogger } from '@chat-app/shared';
 
 const containerLogger = createChildLogger({ module: 'service-container' });
@@ -15,6 +17,8 @@ export class ServiceContainer {
   public readonly userManager: UserManager;
   public readonly chatHistory: ChatHistoryService;
   public readonly messageService: MessageService;
+  public readonly aiService: AIService;
+  public readonly aiStreamManager: AIStreamManager;
 
   private constructor() {
     containerLogger.info('Initializing service container');
@@ -22,6 +26,8 @@ export class ServiceContainer {
     // Initialize services in dependency order
     this.userManager = new UserManager();
     this.chatHistory = new ChatHistoryService();
+    this.aiService = new AIService();
+    this.aiStreamManager = new AIStreamManager(this.aiService, this.chatHistory);
 
     // Initialize services that depend on others
     this.messageService = new MessageService(this.chatHistory, this.userManager);
@@ -53,6 +59,7 @@ export class ServiceContainer {
    */
   public async cleanup(): Promise<void> {
     containerLogger.info('Cleaning up service container');
+    this.aiStreamManager.shutdown();
     // Add any cleanup logic for services here
     // e.g., closing connections, flushing buffers, etc.
   }

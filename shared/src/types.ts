@@ -57,6 +57,39 @@ export interface ValidationError {
   error: string;
 }
 
+// AI Streaming types
+export interface AIStreamStartPayload {
+  messageId: string;
+  roomId: string;
+  timestamp: string;
+}
+
+export interface AIStreamChunkPayload {
+  messageId: string;
+  roomId: string;
+  chunk: string;
+  accumulatedText: string;
+}
+
+export interface AIStreamFinishPayload {
+  messageId: string;
+  roomId: string;
+  fullText: string;
+  timestamp: string;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
+
+export interface AIStreamErrorPayload {
+  messageId: string;
+  roomId: string;
+  error: string;
+  timestamp: string;
+}
+
 // Socket event types for type-safe event handling
 export interface ServerToClientEvents {
   connect: () => void;
@@ -68,6 +101,10 @@ export interface ServerToClientEvents {
   users_list: (users: UserInfo[]) => void;
   chat_history: (messages: Message[]) => void;
   validation_error: (error: ValidationError) => void;
+  ai_stream_start: (payload: AIStreamStartPayload) => void;
+  ai_stream_chunk: (payload: AIStreamChunkPayload) => void;
+  ai_stream_finish: (payload: AIStreamFinishPayload) => void;
+  ai_stream_error: (payload: AIStreamErrorPayload) => void;
 }
 
 export interface ClientToServerEvents {

@@ -9,6 +9,7 @@ import { useChatMessages } from '../hooks/useChatMessages';
 import { useSocketConnection } from '../hooks/useSocketConnection';
 import { useOnlineUsers } from '../hooks/useOnlineUsers';
 import { useTypingIndicator } from '../hooks/useTypingIndicator';
+import { useAIStream } from '../hooks/useAIStream';
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, color, roomId }) => {
   const [inputMessage, setInputMessage] = useState<string>('');
@@ -21,7 +22,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
   );
 
   // Custom hooks for managing chat functionality
-  const { messages, isLoadingHistory, requestHistory } = useChatMessages(socket, logger);
+  const { messages, isLoadingHistory, requestHistory, setMessages } = useChatMessages(socket, logger);
   const { isConnected } = useSocketConnection(socket, username, roomId, logger, requestHistory);
   const { onlineUsers } = useOnlineUsers(socket, logger);
   const { typingUsers, handleInputChange: handleTypingInputChange, clearTypingOnSubmit } = useTypingIndicator(
@@ -29,6 +30,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
     isConnected,
     logger
   );
+  const { aiStreamState, aiMessage } = useAIStream(socket, roomId, logger, {
+    onFinish: (finalMessage) => {
+      // Add finalized AI message to messages array
+      setMessages((prev) => [...prev, finalMessage]);
+    },
+  });
+
+  // Combine regular messages with AI streaming message
+  const allMessages = useMemo(() => {
+    const combined = [...messages];
+    if (aiMessage && aiStreamState.isStreaming) {
+      combined.push(aiMessage);
+    }
+    return combined;
+  }, [messages, aiMessage, aiStreamState.isStreaming]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -36,10 +52,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [allMessages]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Don't send messages while AI is streaming
+    if (aiStreamState.isStreaming) {
+      logger.debug('Message send blocked: AI is streaming');
+      return;
+    }
+
     if (inputMessage.trim() && socket && isConnected) {
       const messageText = inputMessage.trim();
       logger.info({ textLength: messageText.length }, 'Sending message');
@@ -71,7 +94,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
       <Header windowId={windowId} color={color} isConnected={isConnected} username={username} roomId={roomId} />
       <OnlineStatusBar onlineUsers={onlineUsers} />
       <MessagesContainer
-        messages={messages}
+        messages={allMessages}
         username={username}
         typingUsers={typingUsers}
         messagesEndRef={messagesEndRef}
@@ -79,9 +102,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
       />
       <MessageInputForm
         inputMessage={inputMessage}
-        isConnected={isConnected}
+        isConnected={isConnected && !aiStreamState.isStreaming}
         onSubmit={handleSendMessage}
         onChange={handleInputChange}
+        placeholder={aiStreamState.isStreaming ? 'AI is responding...' : undefined}
       />
     </div>
   );

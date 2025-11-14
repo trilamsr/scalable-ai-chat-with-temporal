@@ -15,3 +15,6 @@ export * from './logger.config';
 
 // Export logger (pre-configured for Node.js or Browser)
 export { default as logger, createChildLogger } from './logger';
+
+// Export AI streaming abstractions
+export * from './ai-stream';

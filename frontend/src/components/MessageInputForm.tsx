@@ -5,6 +5,7 @@ interface MessageInputFormProps {
   isConnected: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
 }
 
 const MessageInputForm: React.FC<MessageInputFormProps> = ({
@@ -12,6 +13,7 @@ const MessageInputForm: React.FC<MessageInputFormProps> = ({
   isConnected,
   onSubmit,
   onChange,
+  placeholder = 'Type a message...',
 }) => {
   return (
     <form className="flex gap-2.5 p-4 bg-white border-t border-gray-200" onSubmit={onSubmit}>
@@ -19,7 +21,7 @@ const MessageInputForm: React.FC<MessageInputFormProps> = ({
         type="text"
         value={inputMessage}
         onChange={onChange}
-        placeholder="Type a message..."
+        placeholder={placeholder}
         className="flex-1 px-4 py-3 border border-gray-300 rounded-full text-sm outline-none focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
         disabled={!isConnected}
       />

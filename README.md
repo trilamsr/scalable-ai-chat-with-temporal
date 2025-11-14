@@ -6,9 +6,13 @@ A real-time chat application with 3 independent chat windows running side-by-sid
 
 - **3 Side-by-Side Chat Windows**: Three independent chat clients in a single interface
 - **Real-time Communication**: WebSocket-based messaging with Socket.io
+- **AI Assistant**: Automatic AI responses using OpenAI with streaming support
+- **Smart Input Blocking**: Input disabled while AI is generating responses
+- **Reconnection Support**: Join mid-stream and see ongoing AI responses
 - **User Presence**: See who's online in real-time
 - **Typing Indicators**: Know when other users are typing
 - **System Notifications**: Join/leave notifications
+- **Persistent Chat History**: Redis-backed message storage
 - **Responsive Design**: Works on desktop and mobile devices
 - **Dockerized**: Easy deployment with Docker Compose
 
@@ -50,6 +54,20 @@ A real-time chat application with 3 independent chat windows running side-by-sid
 - Docker Compose (version 2.0 or higher)
 
 ## Quick Start with Docker
+
+### Setup Environment Variables
+
+1. **Create a `.env` file** in the root directory:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Add your OpenAI API key** to the `.env` file:
+   ```bash
+   OPENAI_API_KEY=your_actual_openai_api_key_here
+   ```
+
+   Get your API key from: https://platform.openai.com/api-keys
 
 ### Development Mode (with hot-reloading)
 
@@ -141,8 +159,10 @@ A real-time chat application with 3 independent chat windows running side-by-sid
 The backend uses Express and Socket.io to manage WebSocket connections. It handles:
 - User connections and disconnections
 - Message broadcasting to all connected clients
+- AI-powered responses with real-time streaming
 - User presence tracking
 - Typing indicators
+- Persistent message history with Redis
 
 ### Frontend (React Application)
 
@@ -156,6 +176,16 @@ Each window:
 - Receives all messages from the server
 - Can send messages independently
 - Shows real-time user presence and typing indicators
+- Receives AI streaming responses in real-time
+
+### AI Assistant
+
+The AI assistant is powered by OpenAI and responds to every message automatically:
+- **Streaming Responses**: See AI responses character by character as they're generated
+- **Context Aware**: Uses recent chat history for better responses
+- **Smart Input Blocking**: Input is disabled while AI is generating to prevent interruptions
+- **Reconnection Support**: Join a room mid-generation and see the AI continuing to respond
+- **Multi-Room Support**: Each chat room has independent AI streaming sessions
 
 ## Environment Variables
 
@@ -163,10 +193,13 @@ Each window:
 
 - `PORT`: Server port (default: 4000)
 - `FRONTEND_URL`: Allowed CORS origin (default: http://localhost:3000)
+- `OPENAI_API_KEY`: OpenAI API key for AI assistant features (required for AI functionality)
+- `REDIS_HOST`: Redis host (default: localhost)
+- `REDIS_PORT`: Redis port (default: 6379)
 
 ### Frontend
 
-- `REACT_APP_BACKEND_URL`: Backend WebSocket URL (default: http://localhost:4000)
+- `VITE_BACKEND_URL`: Backend WebSocket URL (default: http://localhost:4000)
 
 ## Docker Configuration
 
