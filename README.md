@@ -37,13 +37,36 @@ A real-time chat application with 3 independent chat windows running side-by-sid
 
 ## Quick Start with Docker
 
+### Development Mode (with hot-reloading)
+
 1. **Clone the repository** (if applicable):
    ```bash
    git clone <repository-url>
    cd scalable-ai-chat-app
    ```
 
-2. **Start the application**:
+2. **Start the application in development mode**:
+   ```bash
+   docker-compose -f docker-compose.dev.yml up --build
+   ```
+
+   This will:
+   - Enable hot-reloading for both frontend and backend
+   - Mount your source code as volumes
+   - Use nodemon for backend (TypeScript auto-compilation)
+   - Use React dev server for frontend
+   - Show debug logs
+
+3. **Make changes to your code** - they will automatically reload!
+
+4. **Stop the application**:
+   ```bash
+   docker-compose -f docker-compose.dev.yml down
+   ```
+
+### Production Mode
+
+1. **Start the application**:
    ```bash
    docker-compose up --build
    ```

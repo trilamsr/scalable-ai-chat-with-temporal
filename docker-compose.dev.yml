@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: chat-backend-dev
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+      - FRONTEND_URL=http://localhost:3000
+      - LOG_LEVEL=debug
+    volumes:
+      # Mount source code for hot-reloading
+      - ./backend/src:/app/src:delegated
+      - ./backend/package.json:/app/package.json:delegated
+      - ./backend/tsconfig.json:/app/tsconfig.json:delegated
+      # Keep node_modules in container (don't overwrite with host)
+      - /app/node_modules
+    networks:
+      - chat-network
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: chat-frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:4000
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      # Mount source code for hot-reloading
+      - ./frontend/src:/app/src:delegated
+      - ./frontend/public:/app/public:delegated
+      - ./frontend/package.json:/app/package.json:delegated
+      - ./frontend/tsconfig.json:/app/tsconfig.json:delegated
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js:delegated
+      - ./frontend/postcss.config.js:/app/postcss.config.js:delegated
+      # Keep node_modules in container (don't overwrite with host)
+      - /app/node_modules
+    networks:
+      - chat-network
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+
+networks:
+  chat-network:
+    driver: bridge

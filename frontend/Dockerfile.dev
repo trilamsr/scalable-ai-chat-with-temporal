@@ -1,0 +1,25 @@
+# Development Dockerfile for Frontend
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies (use install instead of ci for development flexibility)
+RUN npm install --legacy-peer-deps
+
+# Copy configuration files
+COPY tsconfig.json ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
+
+# Copy source files
+COPY src ./src
+COPY public ./public
+
+# Expose React dev server port
+EXPOSE 3000
+
+# Start React development server
+CMD ["npm", "start"]
