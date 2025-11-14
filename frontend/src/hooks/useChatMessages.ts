@@ -20,6 +20,8 @@ export function useChatMessages(socket: TypedSocket, logger: ILogger): UseChatMe
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const historyLoadedRef = useRef<boolean>(false);
+  // Persistent Set for O(1) duplicate checking instead of O(n) Set creation
+  const messageIdsRef = useRef<Set<string>>(new Set());
 
   const requestHistory = useCallback(() => {
     if (!historyLoadedRef.current && socket) {
@@ -37,18 +39,24 @@ export function useChatMessages(socket: TypedSocket, logger: ILogger): UseChatMe
         { messageId: message.id, from: message.username, textLength: message.text.length },
         'Message received'
       );
+      // Add to persistent Set for duplicate tracking
+      messageIdsRef.current.add(message.id);
       setMessages((prevMessages) => [...prevMessages, message]);
     };
 
     const handleUserJoined = (data: UserJoinedPayload) => {
       logger.info({ joinedUser: data.username }, 'User joined chat');
       const systemMessage = createSystemMessage(data.username, 'joined', data.timestamp, data.roomId);
+      // Add to persistent Set for duplicate tracking
+      messageIdsRef.current.add(systemMessage.id);
       setMessages((prevMessages) => [...prevMessages, systemMessage]);
     };
 
     const handleUserLeft = (data: UserLeftPayload) => {
       logger.info({ leftUser: data.username }, 'User left chat');
       const systemMessage = createSystemMessage(data.username, 'left', data.timestamp, data.roomId);
+      // Add to persistent Set for duplicate tracking
+      messageIdsRef.current.add(systemMessage.id);
       setMessages((prevMessages) => [...prevMessages, systemMessage]);
     };
 
@@ -60,8 +68,12 @@ export function useChatMessages(socket: TypedSocket, logger: ILogger): UseChatMe
       if (historyMessages.length > 0) {
         const nonSystemMessages = historyMessages.filter(msg => !msg.isSystem);
         setMessages((prevMessages) => {
-          const existingIds = new Set(prevMessages.map(m => m.id));
-          const newMessages = nonSystemMessages.filter(msg => !existingIds.has(msg.id));
+          // Use persistent Set for O(1) duplicate checking instead of creating new Set
+          const newMessages = nonSystemMessages.filter(msg => !messageIdsRef.current.has(msg.id));
+
+          // Add new message IDs to persistent Set
+          newMessages.forEach(msg => messageIdsRef.current.add(msg.id));
+
           return [...newMessages, ...prevMessages];
         });
       }
