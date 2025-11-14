@@ -1,6 +1,23 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: chat-redis-dev
+    ports:
+      - "6379:6379"
+    networks:
+      - chat-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data-dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
   backend:
     build:
       context: .
@@ -12,6 +29,7 @@ services:
       - NODE_ENV=development
       - PORT=4000
       - FRONTEND_URL=http://localhost:3000
+      - REDIS_URL=redis://redis:6379
       - LOG_LEVEL=debug
     volumes:
       # Mount root package.json for workspace configuration
@@ -30,6 +48,8 @@ services:
       - /app/shared/node_modules
     networks:
       - chat-network
+    depends_on:
+      - redis
     working_dir: /app/backend
     command: npm run dev
 
@@ -73,3 +93,6 @@ services:
 networks:
   chat-network:
     driver: bridge
+
+volumes:
+  redis-data-dev:

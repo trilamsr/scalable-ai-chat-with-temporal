@@ -6,6 +6,7 @@ interface MessagesContainerProps {
   username: string;
   typingUsers: Set<string>;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  isLoadingHistory?: boolean;
 }
 
 const MessagesContainer: React.FC<MessagesContainerProps> = ({
@@ -13,6 +14,7 @@ const MessagesContainer: React.FC<MessagesContainerProps> = ({
   username,
   typingUsers,
   messagesEndRef,
+  isLoadingHistory = false,
 }) => {
   const formatTimestamp = (timestamp: string): string => {
     const date = new Date(timestamp);
@@ -21,6 +23,11 @@ const MessagesContainer: React.FC<MessagesContainerProps> = ({
 
   return (
     <div className="flex-1 overflow-y-auto p-5 bg-gray-50 flex flex-col gap-3">
+      {isLoadingHistory && (
+        <div className="self-center px-3 py-2 bg-blue-100 text-blue-700 rounded-xl text-xs animate-pulse">
+          Loading chat history...
+        </div>
+      )}
       {messages.map((msg) => (
         <div
           key={msg.id}

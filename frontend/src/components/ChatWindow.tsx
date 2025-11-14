@@ -12,8 +12,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [onlineUsers, setOnlineUsers] = useState<UserInfo[]>([]);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const historyLoadedRef = useRef<boolean>(false);
 
   // Create a logger specific to this chat window
   const logger = useMemo(
@@ -36,6 +38,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
       setIsConnected(true);
       logger.info('Connected to server');
       socket.emit('join', username);
+
+      // Request chat history after joining
+      if (!historyLoadedRef.current) {
+        setIsLoadingHistory(true);
+        logger.info('Requesting chat history');
+        socket.emit('get_history', 50);
+      }
     };
 
     const handleDisconnect = () => {
@@ -95,6 +104,24 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
       }
     };
 
+    const handleChatHistory = (historyMessages: Message[]) => {
+      logger.info({ messageCount: historyMessages.length }, 'Chat history received');
+      setIsLoadingHistory(false);
+      historyLoadedRef.current = true;
+
+      if (historyMessages.length > 0) {
+        // Filter out system messages from history and add them
+        // System messages (join/leave) will be generated again by current socket events
+        const nonSystemMessages = historyMessages.filter(msg => !msg.isSystem);
+        setMessages((prevMessages) => {
+          // Create a set of existing message IDs to prevent duplicates
+          const existingIds = new Set(prevMessages.map(m => m.id));
+          const newMessages = nonSystemMessages.filter(msg => !existingIds.has(msg.id));
+          return [...newMessages, ...prevMessages];
+        });
+      }
+    };
+
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
     socket.on('receive_message', handleReceiveMessage);
@@ -102,6 +129,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
     socket.on('user_left', handleUserLeft);
     socket.on('users_list', handleUsersList);
     socket.on('user_typing', handleUserTyping);
+    socket.on('chat_history', handleChatHistory);
 
     if (socket.connected) {
       handleConnect();
@@ -115,6 +143,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
       socket.off('user_left', handleUserLeft);
       socket.off('users_list', handleUsersList);
       socket.off('user_typing', handleUserTyping);
+      socket.off('chat_history', handleChatHistory);
     };
   }, [socket, windowId, username, logger]);
 
@@ -164,6 +193,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
         username={username}
         typingUsers={typingUsers}
         messagesEndRef={messagesEndRef}
+        isLoadingHistory={isLoadingHistory}
       />
       <MessageInputForm
         inputMessage={inputMessage}
