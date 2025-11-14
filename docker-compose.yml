@@ -12,6 +12,9 @@ services:
       - NODE_ENV=production
       - PORT=4000
       - FRONTEND_URL=http://localhost:3000
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
     networks:
       - chat-network
     restart: unless-stopped
@@ -21,6 +24,23 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    container_name: chat-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - chat-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   frontend:
     build:
@@ -42,3 +62,6 @@ services:
 networks:
   chat-network:
     driver: bridge
+
+volumes:
+  redis-data:
