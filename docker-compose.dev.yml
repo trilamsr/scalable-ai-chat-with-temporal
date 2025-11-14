@@ -41,19 +41,19 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_BACKEND_URL=http://localhost:4000
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
+      - VITE_BACKEND_URL=http://localhost:4000
     volumes:
       # Mount root package.json for workspace configuration
       - ./package.json:/app/package.json:delegated
       # Mount source code for hot-reloading
       - ./frontend/src:/app/frontend/src:delegated
-      - ./frontend/public:/app/frontend/public:delegated
+      - ./frontend/index.html:/app/frontend/index.html:delegated
+      - ./frontend/vite.config.ts:/app/frontend/vite.config.ts:delegated
       - ./frontend/package.json:/app/frontend/package.json:delegated
       - ./frontend/tsconfig.json:/app/frontend/tsconfig.json:delegated
       - ./frontend/tailwind.config.js:/app/frontend/tailwind.config.js:delegated
       - ./frontend/postcss.config.js:/app/frontend/postcss.config.js:delegated
+      - ./frontend/.env:/app/frontend/.env:delegated
       # Mount shared folder
       - ./shared/src:/app/shared/src:delegated
       - ./shared/package.json:/app/shared/package.json:delegated

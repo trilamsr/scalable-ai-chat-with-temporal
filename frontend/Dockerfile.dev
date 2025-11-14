@@ -17,7 +17,7 @@ COPY frontend/package*.json ./frontend/
 
 # Install all dependencies with cache mount for faster rebuilds
 RUN --mount=type=cache,target=/root/.npm \
-    npm install --legacy-peer-deps
+    npm install
 
 # Copy shared config and source
 COPY shared/tsconfig.json ./shared/
@@ -26,19 +26,16 @@ COPY shared/src ./shared/src
 # Build shared package so it's available for imports
 RUN npm run build --workspace=shared
 
-# Note: All frontend files are mounted as volumes via docker-compose:
-# - frontend/src, frontend/public
-# - frontend/tsconfig.json, tailwind.config.js, postcss.config.js
+# Note: Frontend files are mounted as volumes via docker-compose for hot-reloading:
+# - frontend/src, index.html, vite.config.ts, tsconfig.json
+# - tailwind.config.js, postcss.config.js, .env
 # The volumes will override any COPY commands, so we don't copy them here
 
-# Expose React dev server port
+# Expose Vite dev server port
 EXPOSE 3000
 
 # Set working directory to frontend
 WORKDIR /app/frontend
 
-# Use node user for better security (optional in dev, but good practice)
-USER node
-
-# Start React development server
-CMD ["npm", "start"]
+# Start Vite development server
+CMD ["npm", "run", "dev"]

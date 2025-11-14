@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import ChatWindow from './components/ChatWindow';
 import { logger } from '@chat-app/shared';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4000';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 
 interface UserConfig {
   username: string;
