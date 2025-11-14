@@ -3,15 +3,26 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY tsconfig.json ./
-
-# Install all dependencies (including dev dependencies)
+# Copy and install shared dependencies first
+COPY shared/package*.json ./shared/
+WORKDIR /app/shared
 RUN npm install
 
-# Copy source files
-COPY src ./src
+# Copy shared source files
+COPY shared/src ./src
+COPY shared/tsconfig.json ./
+
+# Switch back to /app and copy backend package files
+WORKDIR /app
+COPY backend/package*.json ./backend/
+COPY backend/tsconfig.json ./backend/
+
+# Install backend dependencies
+WORKDIR /app/backend
+RUN npm install
+
+# Copy backend source files
+COPY backend/src ./src
 
 # Expose the WebSocket server port
 EXPOSE 4000

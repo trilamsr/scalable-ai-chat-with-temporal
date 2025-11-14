@@ -1,5 +1,6 @@
 /**
  * Shared type definitions for socket events and messages
+ * Used by both backend and frontend
  */
 
 // Base interfaces
@@ -30,6 +31,7 @@ export interface MessageData {
 export interface Message extends BaseUserEvent {
   id: string;
   text: string;
+  isSystem?: boolean;
 }
 
 // Socket event types for type-safe event handling

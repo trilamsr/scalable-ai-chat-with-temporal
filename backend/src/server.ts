@@ -3,8 +3,8 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { initializeSocket } from './socket';
-import logger from './logger';
-import type { ServerToClientEvents, ClientToServerEvents } from './types';
+import logger from '@shared/logger';
+import type { ServerToClientEvents, ClientToServerEvents } from '@shared/types';
 
 const app = express();
 const server = http.createServer(app);

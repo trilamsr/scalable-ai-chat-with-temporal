@@ -3,8 +3,8 @@ version: '3.8'
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ./backend/Dockerfile.dev
     container_name: chat-backend-dev
     ports:
       - "4000:4000"
@@ -15,19 +15,25 @@ services:
       - LOG_LEVEL=debug
     volumes:
       # Mount source code for hot-reloading
-      - ./backend/src:/app/src:delegated
-      - ./backend/package.json:/app/package.json:delegated
-      - ./backend/tsconfig.json:/app/tsconfig.json:delegated
+      - ./backend/src:/app/backend/src:delegated
+      - ./backend/package.json:/app/backend/package.json:delegated
+      - ./backend/tsconfig.json:/app/backend/tsconfig.json:delegated
+      # Mount shared folder
+      - ./shared/src:/app/shared/src:delegated
+      - ./shared/package.json:/app/shared/package.json:delegated
+      - ./shared/tsconfig.json:/app/shared/tsconfig.json:delegated
       # Keep node_modules in container (don't overwrite with host)
-      - /app/node_modules
+      - /app/backend/node_modules
+      - /app/shared/node_modules
     networks:
       - chat-network
+    working_dir: /app/backend
     command: npm run dev
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ./frontend/Dockerfile.dev
     container_name: chat-frontend-dev
     ports:
       - "3000:3000"
@@ -37,18 +43,25 @@ services:
       - WATCHPACK_POLLING=true
     volumes:
       # Mount source code for hot-reloading
-      - ./frontend/src:/app/src:delegated
-      - ./frontend/public:/app/public:delegated
-      - ./frontend/package.json:/app/package.json:delegated
-      - ./frontend/tsconfig.json:/app/tsconfig.json:delegated
-      - ./frontend/tailwind.config.js:/app/tailwind.config.js:delegated
-      - ./frontend/postcss.config.js:/app/postcss.config.js:delegated
+      - ./frontend/src:/app/frontend/src:delegated
+      - ./frontend/public:/app/frontend/public:delegated
+      - ./frontend/package.json:/app/frontend/package.json:delegated
+      - ./frontend/tsconfig.json:/app/frontend/tsconfig.json:delegated
+      - ./frontend/craco.config.js:/app/frontend/craco.config.js:delegated
+      - ./frontend/tailwind.config.js:/app/frontend/tailwind.config.js:delegated
+      - ./frontend/postcss.config.js:/app/frontend/postcss.config.js:delegated
+      # Mount shared folder
+      - ./shared/src:/app/shared/src:delegated
+      - ./shared/package.json:/app/shared/package.json:delegated
+      - ./shared/tsconfig.json:/app/shared/tsconfig.json:delegated
       # Keep node_modules in container (don't overwrite with host)
-      - /app/node_modules
+      - /app/frontend/node_modules
+      - /app/shared/node_modules
     networks:
       - chat-network
     depends_on:
       - backend
+    working_dir: /app/frontend
     stdin_open: true
     tty: true
 

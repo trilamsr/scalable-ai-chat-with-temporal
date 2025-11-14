@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import { createChildLogger } from './logger';
+import { createChildLogger } from '@shared/logger';
 import type {
   MessageData,
   Message,
@@ -9,7 +9,7 @@ import type {
   UserInfo,
   ServerToClientEvents,
   ClientToServerEvents,
-} from './types';
+} from '@shared/types';
 
 // Type-safe socket types
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;

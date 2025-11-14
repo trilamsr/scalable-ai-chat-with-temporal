@@ -15,19 +15,33 @@ A real-time chat application with 3 independent chat windows running side-by-sid
 ## Architecture
 
 ```
-├── backend/          # Node.js WebSocket server
-│   ├── server.js     # Main server file
-│   ├── package.json
-│   └── Dockerfile
-├── frontend/         # React application
+├── shared/                    # Shared code between backend and frontend
 │   ├── src/
-│   │   ├── App.js
-│   │   └── components/
-│   │       └── ChatWindow.js
+│   │   ├── types.ts          # Shared TypeScript types
+│   │   └── logger.interface.ts  # Logger interface
+│   └── package.json
+├── backend/                   # Node.js WebSocket server (TypeScript)
+│   ├── src/
+│   │   ├── server.ts         # Main server file
+│   │   ├── socket.ts         # Socket handlers
+│   │   ├── logger.ts         # Pino logger (Node.js)
+│   │   └── types.ts          # Re-exports from shared
 │   ├── package.json
-│   ├── nginx.conf
+│   ├── tsconfig.json
 │   └── Dockerfile
-└── docker-compose.yml
+├── frontend/                  # React application (TypeScript + Tailwind)
+│   ├── src/
+│   │   ├── App.tsx
+│   │   ├── components/
+│   │   │   └── ChatWindow.tsx
+│   │   ├── utils/
+│   │   │   └── logger.ts     # Pino logger (Browser)
+│   │   └── types.ts          # Re-exports from shared
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── Dockerfile
+├── docker-compose.yml         # Production compose
+└── docker-compose.dev.yml     # Development compose with hot-reload
 ```
 
 ## Prerequisites
