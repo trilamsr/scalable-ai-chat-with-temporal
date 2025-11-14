@@ -1,5 +1,6 @@
 import React from 'react';
 import { Message } from '@chat-app/shared';
+import { formatTimestamp } from '../utils/messageHelpers';
 
 interface MessagesContainerProps {
   messages: Message[];
@@ -16,10 +17,6 @@ const MessagesContainer: React.FC<MessagesContainerProps> = ({
   messagesEndRef,
   isLoadingHistory = false,
 }) => {
-  const formatTimestamp = (timestamp: string): string => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
 
   return (
     <div className="flex-1 overflow-y-auto p-5 bg-gray-50 flex flex-col gap-3">

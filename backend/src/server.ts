@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import { initializeSocket } from './socket';
 import { logger, ServerToClientEvents, ClientToServerEvents } from '@chat-app/shared';
+import { DEFAULT_PORT, DEFAULT_CORS_ORIGIN } from './utils/constants';
 
 const app = express();
 const server = http.createServer(app);
@@ -11,7 +12,7 @@ const server = http.createServer(app);
 // Configure CORS for Socket.io with type-safe events
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || DEFAULT_CORS_ORIGIN,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -29,7 +30,7 @@ app.get('/health', (_req: Request, res: Response) => {
 // Initialize socket event handlers
 initializeSocket(io);
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || DEFAULT_PORT;
 
 server.listen(PORT, () => {
   logger.info({ port: PORT }, 'WebSocket server running');

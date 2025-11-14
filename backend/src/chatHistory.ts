@@ -1,10 +1,9 @@
 import { redis } from './redis';
 import { Message, createChildLogger } from '@chat-app/shared';
+import { getErrorMessage } from './utils/errorHelpers';
+import { REDIS_KEYS, CHAT_HISTORY } from './utils/constants';
 
 const historyLogger = createChildLogger({ module: 'chat-history' });
-
-// Redis stream key for chat messages
-const CHAT_STREAM_KEY = 'chat:messages';
 
 /**
  * Chat history service using Redis Streams
@@ -19,7 +18,7 @@ export class ChatHistoryService {
     try {
       // XADD chat:messages * field1 value1 field2 value2 ...
       const streamId = await redis.xadd(
-        CHAT_STREAM_KEY,
+        REDIS_KEYS.CHAT_MESSAGES,
         '*', // Auto-generate ID based on timestamp
         'id', message.id,
         'username', message.username,
@@ -36,7 +35,7 @@ export class ChatHistoryService {
       return streamId;
     } catch (error) {
       historyLogger.error(
-        { error: error instanceof Error ? error.message : 'Unknown error', messageId: message.id },
+        { error: getErrorMessage(error), messageId: message.id },
         'Failed to add message to history'
       );
       throw error;
@@ -48,11 +47,11 @@ export class ChatHistoryService {
    * @param count - Number of messages to retrieve (default: 50)
    * @returns Array of messages in chronological order
    */
-  async getRecentMessages(count: number = 50): Promise<Message[]> {
+  async getRecentMessages(count: number = CHAT_HISTORY.DEFAULT_MESSAGE_COUNT): Promise<Message[]> {
     try {
       // XREVRANGE returns messages in reverse chronological order
       // We use XREVRANGE to get the most recent messages efficiently
-      const results = await redis.xrevrange(CHAT_STREAM_KEY, '+', '-', 'COUNT', count);
+      const results = await redis.xrevrange(REDIS_KEYS.CHAT_MESSAGES, '+', '-', 'COUNT', count);
 
       if (!results || results.length === 0) {
         historyLogger.debug('No messages found in history');
@@ -83,7 +82,7 @@ export class ChatHistoryService {
       return messages;
     } catch (error) {
       historyLogger.error(
-        { error: error instanceof Error ? error.message : 'Unknown error' },
+        { error: getErrorMessage(error) },
         'Failed to retrieve message history'
       );
       throw error;
@@ -96,11 +95,11 @@ export class ChatHistoryService {
    */
   async getMessageCount(): Promise<number> {
     try {
-      const length = await redis.xlen(CHAT_STREAM_KEY);
+      const length = await redis.xlen(REDIS_KEYS.CHAT_MESSAGES);
       return length;
     } catch (error) {
       historyLogger.error(
-        { error: error instanceof Error ? error.message : 'Unknown error' },
+        { error: getErrorMessage(error) },
         'Failed to get message count'
       );
       return 0;
@@ -112,14 +111,14 @@ export class ChatHistoryService {
    * This helps manage memory usage
    * @param maxLength - Maximum number of messages to keep (default: 1000)
    */
-  async trimHistory(maxLength: number = 1000): Promise<void> {
+  async trimHistory(maxLength: number = CHAT_HISTORY.MAX_HISTORY_LENGTH): Promise<void> {
     try {
       // XTRIM with MAXLEN keeps approximately the specified number of entries
-      await redis.xtrim(CHAT_STREAM_KEY, 'MAXLEN', '~', maxLength);
+      await redis.xtrim(REDIS_KEYS.CHAT_MESSAGES, 'MAXLEN', '~', maxLength);
       historyLogger.info({ maxLength }, 'Chat history trimmed');
     } catch (error) {
       historyLogger.error(
-        { error: error instanceof Error ? error.message : 'Unknown error' },
+        { error: getErrorMessage(error) },
         'Failed to trim chat history'
       );
     }
@@ -131,11 +130,11 @@ export class ChatHistoryService {
    */
   async clearHistory(): Promise<void> {
     try {
-      await redis.del(CHAT_STREAM_KEY);
+      await redis.del(REDIS_KEYS.CHAT_MESSAGES);
       historyLogger.warn('Chat history cleared');
     } catch (error) {
       historyLogger.error(
-        { error: error instanceof Error ? error.message : 'Unknown error' },
+        { error: getErrorMessage(error) },
         'Failed to clear chat history'
       );
       throw error;

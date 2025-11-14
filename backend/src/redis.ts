@@ -1,5 +1,6 @@
 import Redis from 'ioredis';
 import { createChildLogger } from '@chat-app/shared';
+import { REDIS_RETRY } from './utils/constants';
 
 const redisLogger = createChildLogger({ module: 'redis' });
 
@@ -9,7 +10,7 @@ const redisLogger = createChildLogger({ module: 'redis' });
 export const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: 3,
   retryStrategy(times) {
-    const delay = Math.min(times * 50, 2000);
+    const delay = Math.min(times * REDIS_RETRY.INITIAL_DELAY_MS, REDIS_RETRY.MAX_DELAY_MS);
     return delay;
   },
   reconnectOnError(err) {

@@ -11,6 +11,7 @@ import {
   ClientToServerEvents,
 } from '@chat-app/shared';
 import { chatHistory } from './chatHistory';
+import { getErrorMessage } from './utils/errorHelpers';
 
 // Type-safe socket types
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -92,7 +93,7 @@ class SocketHandlers {
       await chatHistory.addMessage(message);
     } catch (error) {
       socketLogger.error(
-        { error: error instanceof Error ? error.message : 'Unknown error', messageId: message.id },
+        { error: getErrorMessage(error), messageId: message.id },
         'Failed to save message to history'
       );
       // Continue even if history save fails
@@ -140,7 +141,7 @@ class SocketHandlers {
       );
     } catch (error) {
       socketLogger.error(
-        { error: error instanceof Error ? error.message : 'Unknown error', socketId: this.socket.id },
+        { error: getErrorMessage(error), socketId: this.socket.id },
         'Failed to retrieve chat history'
       );
       // Send empty array on error

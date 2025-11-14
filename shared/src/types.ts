@@ -36,6 +36,8 @@ export interface Message extends BaseUserEvent {
 
 // Socket event types for type-safe event handling
 export interface ServerToClientEvents {
+  connect: () => void;
+  disconnect: () => void;
   user_joined: (payload: UserJoinedPayload) => void;
   user_left: (payload: UserLeftPayload) => void;
   user_typing: (payload: UserTypingPayload) => void;

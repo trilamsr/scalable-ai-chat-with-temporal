@@ -1,26 +1,35 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { createChildLogger, Message, UserInfo, UserJoinedPayload, UserLeftPayload, UserTypingPayload } from '@chat-app/shared';
+import { createChildLogger } from '@chat-app/shared';
 import { ChatWindowProps } from '../types';
 import Header from './Header';
 import OnlineStatusBar from './OnlineStatusBar';
 import MessagesContainer from './MessagesContainer';
 import MessageInputForm from './MessageInputForm';
+import {
+  useChatMessages,
+  useSocketConnection,
+  useOnlineUsers,
+  useTypingIndicator,
+} from '../hooks/useChatWindow';
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, color }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState<string>('');
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [onlineUsers, setOnlineUsers] = useState<UserInfo[]>([]);
-  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
-  const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const historyLoadedRef = useRef<boolean>(false);
 
   // Create a logger specific to this chat window
   const logger = useMemo(
     () => createChildLogger({ component: 'ChatWindow', windowId, username }),
     [windowId, username]
+  );
+
+  // Custom hooks for managing chat functionality
+  const { messages, isLoadingHistory, requestHistory } = useChatMessages(socket, logger);
+  const { isConnected } = useSocketConnection(socket, username, logger, requestHistory);
+  const { onlineUsers } = useOnlineUsers(socket, logger);
+  const { typingUsers, handleInputChange: handleTypingInputChange, clearTypingOnSubmit } = useTypingIndicator(
+    socket,
+    isConnected,
+    logger
   );
 
   const scrollToBottom = () => {
@@ -31,154 +40,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleConnect = () => {
-      setIsConnected(true);
-      logger.info('Connected to server');
-      socket.emit('join', username);
-
-      // Request chat history after joining
-      if (!historyLoadedRef.current) {
-        setIsLoadingHistory(true);
-        logger.info('Requesting chat history');
-        socket.emit('get_history', 50);
-      }
-    };
-
-    const handleDisconnect = () => {
-      setIsConnected(false);
-      logger.warn('Disconnected from server');
-    };
-
-    const handleReceiveMessage = (message: Message) => {
-      logger.debug(
-        { messageId: message.id, from: message.username, textLength: message.text.length },
-        'Message received'
-      );
-      setMessages((prevMessages) => [...prevMessages, message]);
-    };
-
-    const handleUserJoined = (data: UserJoinedPayload) => {
-      logger.info({ joinedUser: data.username }, 'User joined chat');
-      const systemMessage: Message = {
-        id: `${data.username}-joined-${data.timestamp}`,
-        username: 'System',
-        userId: 'system',
-        text: `${data.username} joined the chat`,
-        timestamp: data.timestamp,
-        isSystem: true
-      };
-      setMessages((prevMessages) => [...prevMessages, systemMessage]);
-    };
-
-    const handleUserLeft = (data: UserLeftPayload) => {
-      logger.info({ leftUser: data.username }, 'User left chat');
-      const systemMessage: Message = {
-        id: `${data.username}-left-${data.timestamp}`,
-        username: 'System',
-        userId: 'system',
-        text: `${data.username} left the chat`,
-        timestamp: data.timestamp,
-        isSystem: true
-      };
-      setMessages((prevMessages) => [...prevMessages, systemMessage]);
-    };
-
-    const handleUsersList = (users: UserInfo[]) => {
-      logger.debug({ userCount: users.length }, 'Users list updated');
-      setOnlineUsers(users);
-    };
-
-    const handleUserTyping = (data: UserTypingPayload) => {
-      logger.debug({ typingUser: data.username, isTyping: data.isTyping }, 'Typing status changed');
-      if (data.isTyping) {
-        setTypingUsers((prev) => new Set(prev).add(data.username));
-      } else {
-        setTypingUsers((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(data.username);
-          return newSet;
-        });
-      }
-    };
-
-    const handleChatHistory = (historyMessages: Message[]) => {
-      logger.info({ messageCount: historyMessages.length }, 'Chat history received');
-      setIsLoadingHistory(false);
-      historyLoadedRef.current = true;
-
-      if (historyMessages.length > 0) {
-        // Filter out system messages from history and add them
-        // System messages (join/leave) will be generated again by current socket events
-        const nonSystemMessages = historyMessages.filter(msg => !msg.isSystem);
-        setMessages((prevMessages) => {
-          // Create a set of existing message IDs to prevent duplicates
-          const existingIds = new Set(prevMessages.map(m => m.id));
-          const newMessages = nonSystemMessages.filter(msg => !existingIds.has(msg.id));
-          return [...newMessages, ...prevMessages];
-        });
-      }
-    };
-
-    socket.on('connect', handleConnect);
-    socket.on('disconnect', handleDisconnect);
-    socket.on('receive_message', handleReceiveMessage);
-    socket.on('user_joined', handleUserJoined);
-    socket.on('user_left', handleUserLeft);
-    socket.on('users_list', handleUsersList);
-    socket.on('user_typing', handleUserTyping);
-    socket.on('chat_history', handleChatHistory);
-
-    if (socket.connected) {
-      handleConnect();
-    }
-
-    return () => {
-      socket.off('connect', handleConnect);
-      socket.off('disconnect', handleDisconnect);
-      socket.off('receive_message', handleReceiveMessage);
-      socket.off('user_joined', handleUserJoined);
-      socket.off('user_left', handleUserLeft);
-      socket.off('users_list', handleUsersList);
-      socket.off('user_typing', handleUserTyping);
-      socket.off('chat_history', handleChatHistory);
-    };
-  }, [socket, windowId, username, logger]);
-
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim() && socket && isConnected) {
       logger.info({ textLength: inputMessage.length }, 'Sending message');
       socket.emit('send_message', { text: inputMessage });
       setInputMessage('');
-
-      // Stop typing indicator
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      socket.emit('typing', false);
+      clearTypingOnSubmit();
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputMessage(e.target.value);
-
-    if (!socket || !isConnected) return;
-
-    // Emit typing indicator
-    socket.emit('typing', true);
-
-    // Clear previous timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    // Stop typing after 1 second of inactivity
-    typingTimeoutRef.current = setTimeout(() => {
-      socket.emit('typing', false);
-    }, 1000);
+    handleTypingInputChange(e, setInputMessage);
   };
 
   return (
