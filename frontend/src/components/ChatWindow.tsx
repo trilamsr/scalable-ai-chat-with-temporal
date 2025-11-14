@@ -54,7 +54,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
     const handleUserJoined = (data: UserJoinedPayload) => {
       logger.info({ joinedUser: data.username }, 'User joined chat');
       const systemMessage: Message = {
-        id: `system-${Date.now()}`,
+        id: `${data.username}-joined-${data.timestamp}`,
         username: 'System',
         userId: 'system',
         text: `${data.username} joined the chat`,
@@ -67,7 +67,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
     const handleUserLeft = (data: UserLeftPayload) => {
       logger.info({ leftUser: data.username }, 'User left chat');
       const systemMessage: Message = {
-        id: `system-${Date.now()}`,
+        id: `${data.username}-left-${data.timestamp}`,
         username: 'System',
         userId: 'system',
         text: `${data.username} left the chat`,
