@@ -10,6 +10,7 @@ import {
   ServerToClientEvents,
   ClientToServerEvents,
 } from '@chat-app/shared';
+import { chatHistory } from './chatHistory';
 
 // Type-safe socket types
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -70,7 +71,7 @@ class SocketHandlers {
   /**
    * Handle incoming message
    */
-  public onSendMessage = (data: MessageData): void => {
+  public onSendMessage = async (data: MessageData): Promise<void> => {
     const username = connectedUsers.get(this.socket.id) || 'Anonymous';
 
     const message: Message = {
@@ -85,6 +86,17 @@ class SocketHandlers {
       { messageId: message.id, username, socketId: this.socket.id, textLength: data.text.length },
       'Message received'
     );
+
+    // Save message to Redis stream
+    try {
+      await chatHistory.addMessage(message);
+    } catch (error) {
+      socketLogger.error(
+        { error: error instanceof Error ? error.message : 'Unknown error', messageId: message.id },
+        'Failed to save message to history'
+      );
+      // Continue even if history save fails
+    }
 
     // Broadcast message to all connected clients
     this.io.emit('receive_message', message);
@@ -106,6 +118,33 @@ class SocketHandlers {
         isTyping,
       };
       this.socket.broadcast.emit('user_typing', payload);
+    }
+  };
+
+  /**
+   * Handle chat history request
+   */
+  public onGetHistory = async (count?: number): Promise<void> => {
+    const username = connectedUsers.get(this.socket.id);
+    socketLogger.info(
+      { username, socketId: this.socket.id, requestedCount: count },
+      'Chat history requested'
+    );
+
+    try {
+      const messages = await chatHistory.getRecentMessages(count);
+      this.socket.emit('chat_history', messages);
+      socketLogger.debug(
+        { username, socketId: this.socket.id, messagesReturned: messages.length },
+        'Chat history sent'
+      );
+    } catch (error) {
+      socketLogger.error(
+        { error: error instanceof Error ? error.message : 'Unknown error', socketId: this.socket.id },
+        'Failed to retrieve chat history'
+      );
+      // Send empty array on error
+      this.socket.emit('chat_history', []);
     }
   };
 
@@ -142,6 +181,7 @@ class SocketHandlers {
     this.socket.on('join', this.onJoin);
     this.socket.on('send_message', this.onSendMessage);
     this.socket.on('typing', this.onTyping);
+    this.socket.on('get_history', this.onGetHistory);
     this.socket.on('disconnect', this.onDisconnect);
   }
 }

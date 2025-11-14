@@ -41,10 +41,12 @@ export interface ServerToClientEvents {
   user_typing: (payload: UserTypingPayload) => void;
   receive_message: (message: Message) => void;
   users_list: (users: UserInfo[]) => void;
+  chat_history: (messages: Message[]) => void;
 }
 
 export interface ClientToServerEvents {
   join: (username: string) => void;
   send_message: (data: MessageData) => void;
   typing: (isTyping: boolean) => void;
+  get_history: (count?: number) => void;
 }
