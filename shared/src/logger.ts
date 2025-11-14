@@ -8,7 +8,9 @@ import pino from 'pino';
 import { getLogLevel, isDevelopmentEnv, baseLoggerOptions } from './logger.config';
 
 // Detect environment
-const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
+const isNode = typeof process !== 'undefined' &&
+  typeof (process as any).versions !== 'undefined' &&
+  typeof (process as any).versions.node !== 'undefined';
 const isBrowser = typeof globalThis !== 'undefined' && typeof (globalThis as any).window !== 'undefined';
 
 // Get environment variables (works in both Node and Browser)
@@ -17,8 +19,14 @@ const getEnvVar = (key: string): string | undefined => {
     return process.env[key];
   }
   if (isBrowser) {
-    // In browser, React apps use REACT_APP_ prefix
-    return (process.env as any)[key];
+    // In browser, Vite uses import.meta.env
+    if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
+      return (import.meta as any).env[key];
+    }
+    // Fallback for other bundlers that inject process.env
+    if (typeof process !== 'undefined' && (process as any).env) {
+      return (process as any).env[key];
+    }
   }
   return undefined;
 };
