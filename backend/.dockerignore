@@ -1,19 +1,79 @@
+# Backend-specific .dockerignore
+# Only copy what's needed for the backend service
+
+# Dependencies (will be installed in container)
 node_modules
-npm-debug.log
-.git
-.gitignore
-README.md
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files (use secrets/config maps instead)
 .env
-.env.local
-.env.*.local
-.DS_Store
+.env.*
+!.env.example
+
+# Build output (will be built in container)
+dist
+build
+*.tsbuildinfo
+*.js.map
+
+# Testing files
 coverage
+.nyc_output
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+__tests__
+__mocks__
+
+# IDE
 .vscode
 .idea
 *.swp
 *.swo
-dist
-*.js
-*.js.map
-!src/**/*.ts
-tsconfig.tsbuildinfo
+*~
+.claude
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+*~
+
+# Git
+.git
+.gitignore
+.gitattributes
+.github
+
+# Docker files
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+
+# Documentation
+README.md
+*.md
+LICENSE
+
+# Logs
+*.log
+.cache
+logs
+
+# Development tools
+.prettierrc*
+.eslintrc*
+.editorconfig
+nodemon.json
+.nvmrc
+.npmrc
+
+# Misc
+tmp
+temp
+*.tmp

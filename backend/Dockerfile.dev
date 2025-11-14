@@ -1,5 +1,10 @@
-# Development Dockerfile for Backend
+# syntax=docker/dockerfile:1.4
+# Backend Development Dockerfile - Optimized for monorepo with hot-reloading
+
 FROM node:18-alpine
+
+# Install additional tools for development
+RUN apk add --no-cache git
 
 WORKDIR /app
 
@@ -10,22 +15,28 @@ COPY package.json ./
 COPY shared/package*.json ./shared/
 COPY backend/package*.json ./backend/
 
-# Install all dependencies (workspaces will be linked automatically)
-RUN npm install
+# Install all dependencies with cache mount for faster rebuilds
+RUN --mount=type=cache,target=/root/.npm \
+    npm install
 
-# Copy shared source and config
-COPY shared/src ./shared/src
+# Copy shared config and source
 COPY shared/tsconfig.json ./shared/
+COPY shared/src ./shared/src
 
-# Copy backend source and config
-COPY backend/src ./backend/src
-COPY backend/tsconfig.json ./backend/
+# Build shared package so it's available for imports
+RUN npm run build --workspace=shared
+
+# Note: backend/src and backend/tsconfig.json are mounted as volumes via docker-compose
+# The volumes will override any COPY commands, so we don't copy them here
 
 # Expose the WebSocket server port
 EXPOSE 4000
 
 # Set working directory to backend
 WORKDIR /app/backend
+
+# Use node user for better security (optional in dev, but good practice)
+USER node
 
 # Run with nodemon for hot-reloading
 CMD ["npm", "run", "dev"]

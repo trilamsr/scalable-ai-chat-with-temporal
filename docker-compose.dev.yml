@@ -58,10 +58,6 @@ services:
       - ./shared/src:/app/shared/src:delegated
       - ./shared/package.json:/app/shared/package.json:delegated
       - ./shared/tsconfig.json:/app/shared/tsconfig.json:delegated
-      # Keep node_modules in container (don't overwrite with host)
-      - /app/node_modules
-      - /app/frontend/node_modules
-      - /app/shared/node_modules
     networks:
       - chat-network
     depends_on:

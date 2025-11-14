@@ -1,38 +1,38 @@
-# Frontend-specific .dockerignore
-# Only copy what's needed for the frontend service
+# Root .dockerignore for monorepo builds
+# This applies when building from root context
 
-# Dependencies (will be installed in container)
+# Dependencies
 node_modules
+**/node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Environment files (use build args/runtime config instead)
+# Build output (keep these out for multi-stage builds)
+dist
+build
+**/dist
+**/build
+*.tsbuildinfo
+
+# Environment files (never copy env vars into image)
 .env
 .env.*
 !.env.example
 
-# Build output (will be built in container)
-build
-dist
-*.tsbuildinfo
-
-# Testing files
+# Testing
 coverage
+**/coverage
 .nyc_output
 *.test.ts
 *.test.tsx
 *.test.js
-*.test.jsx
 *.spec.ts
 *.spec.tsx
 *.spec.js
-*.spec.jsx
-__tests__
-__mocks__
-setupTests.ts
-setupTests.js
+**/__tests__
+**/__mocks__
 
 # IDE
 .vscode
@@ -42,7 +42,7 @@ setupTests.js
 *~
 .claude
 
-# OS files
+# OS
 .DS_Store
 .DS_Store?
 ._*
@@ -55,31 +55,35 @@ Thumbs.db
 .gitattributes
 .github
 
-# Docker files
+# Docker
 Dockerfile*
 .dockerignore
+**/Dockerfile*
+**/.dockerignore
 docker-compose*.yml
 
 # Documentation
 README.md
-*.md
+**/*.md
+!shared/**/*.md
 LICENSE
+CHANGELOG.md
 
 # Logs
 *.log
 .cache
 logs
 
-# React/CRA specific
-.eslintcache
-public/static/
-
-# Development tools
+# Development files
 .prettierrc*
 .eslintrc*
 .editorconfig
 .nvmrc
 .npmrc
+Makefile
+*.config.js
+!tailwind.config.js
+!postcss.config.js
 
 # Misc
 tmp

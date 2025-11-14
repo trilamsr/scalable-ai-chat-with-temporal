@@ -1,5 +1,10 @@
-# Development Dockerfile for Frontend
+# syntax=docker/dockerfile:1.4
+# Frontend Development Dockerfile - Optimized for monorepo with hot-reloading
+
 FROM node:18-alpine
+
+# Install additional tools for development
+RUN apk add --no-cache git
 
 WORKDIR /app
 
@@ -10,27 +15,30 @@ COPY package.json ./
 COPY shared/package*.json ./shared/
 COPY frontend/package*.json ./frontend/
 
-# Install all dependencies (workspaces will be linked automatically)
-RUN npm install --legacy-peer-deps
+# Install all dependencies with cache mount for faster rebuilds
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --legacy-peer-deps
 
-# Copy shared source and config
-COPY shared/src ./shared/src
+# Copy shared config and source
 COPY shared/tsconfig.json ./shared/
+COPY shared/src ./shared/src
 
-# Copy frontend configuration files
-COPY frontend/tsconfig.json ./frontend/
-COPY frontend/tailwind.config.js ./frontend/
-COPY frontend/postcss.config.js ./frontend/
+# Build shared package so it's available for imports
+RUN npm run build --workspace=shared
 
-# Copy frontend source files
-COPY frontend/src ./frontend/src
-COPY frontend/public ./frontend/public
+# Note: All frontend files are mounted as volumes via docker-compose:
+# - frontend/src, frontend/public
+# - frontend/tsconfig.json, tailwind.config.js, postcss.config.js
+# The volumes will override any COPY commands, so we don't copy them here
 
 # Expose React dev server port
 EXPOSE 3000
 
 # Set working directory to frontend
 WORKDIR /app/frontend
+
+# Use node user for better security (optional in dev, but good practice)
+USER node
 
 # Start React development server
 CMD ["npm", "start"]

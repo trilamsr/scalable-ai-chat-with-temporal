@@ -1,10 +1,16 @@
 # Dependencies
 node_modules/
+**/node_modules/
 package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Production build
 build/
 dist/
+**/build/
+**/dist/
+*.tsbuildinfo
 
 # Environment variables
 .env
@@ -12,29 +18,59 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+*.env
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
 
 # OS files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+*~
 
 # IDE
 .vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
-*~
+*.sublime-workspace
+*.sublime-project
 
 # Testing
 coverage/
+**/coverage/
+.nyc_output/
+*.lcov
 
 # Docker
 *.pid
 *.seed
 *.pid.lock
+
+# React/Frontend specific
+.eslintcache
+public/static/
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+.cache/
+tmp/
+temp/
+*.tmp
