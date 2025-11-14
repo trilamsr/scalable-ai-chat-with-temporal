@@ -5,15 +5,15 @@ import { REDIS_RETRY } from './utils/constants';
 const redisLogger = createChildLogger({ module: 'redis' });
 
 /**
- * Redis client instance
+ * Default Redis configuration
  */
-export const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const DEFAULT_REDIS_CONFIG = {
   maxRetriesPerRequest: 3,
-  retryStrategy(times) {
+  retryStrategy(times: number) {
     const delay = Math.min(times * REDIS_RETRY.INITIAL_DELAY_MS, REDIS_RETRY.MAX_DELAY_MS);
     return delay;
   },
-  reconnectOnError(err) {
+  reconnectOnError(err: Error) {
     const targetError = 'READONLY';
     if (err.message.includes(targetError)) {
       // Only reconnect when the error contains "READONLY"
@@ -21,16 +21,28 @@ export const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379'
     }
     return false;
   },
-});
+};
 
 /**
- * Redis connection event handlers
+ * Create a new Redis client with standard configuration
+ * Used for creating pub/sub clients for Socket.IO adapter
  */
-redis.on('connect', () => { redisLogger.info('Redis client connecting') });
-redis.on('ready', () => { redisLogger.info('Redis client ready')});
-redis.on('error', (err) => { redisLogger.error({ error: err.message }, 'Redis client error')});
-redis.on('close', () => { redisLogger.warn('Redis client connection closed')});
-redis.on('reconnecting', () => { redisLogger.info('Redis client reconnecting')});
+export function createRedisClient(): Redis {
+  const client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', DEFAULT_REDIS_CONFIG);
+
+  client.on('connect', () => redisLogger.debug('Redis client connecting'));
+  client.on('ready', () => redisLogger.debug('Redis client ready'));
+  client.on('error', (err) => redisLogger.error({ error: err.message }, 'Redis client error'));
+  client.on('close', () => redisLogger.warn('Redis client connection closed'));
+  client.on('reconnecting', () => redisLogger.info('Redis client reconnecting'));
+
+  return client;
+}
+
+/**
+ * Redis client instance (main client for chat history)
+ */
+export const redis = createRedisClient();
 
 /**
  * Graceful shutdown handler for Redis

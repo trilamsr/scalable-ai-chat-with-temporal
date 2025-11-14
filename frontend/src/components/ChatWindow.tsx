@@ -41,8 +41,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim() && socket && isConnected) {
-      logger.info({ textLength: inputMessage.length }, 'Sending message');
-      socket.emit('send_message', { text: inputMessage, roomId });
+      const messageText = inputMessage.trim();
+      logger.info({ textLength: messageText.length }, 'Sending message');
+
+      // Send message with acknowledgment callback
+      socket.emit('send_message', { text: messageText, roomId }, (ack) => {
+        if (ack.success) {
+          logger.debug({ messageId: ack.messageId }, 'Message acknowledged and persisted');
+        } else {
+          logger.error({ error: ack.error, code: ack.code }, 'Message failed to send or persist');
+          // Could show error notification to user here
+        }
+      });
+
       setInputMessage('');
       clearTypingOnSubmit();
     }
