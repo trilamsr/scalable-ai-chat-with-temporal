@@ -1,6 +1,6 @@
 # Scalable AI Chat Application
 
-A production-ready, horizontally scalable real-time chat application with AI integration, built with modern technologies and enterprise-grade patterns.
+A production-ready, horizontally scalable real-time chat application with AI integration. It was built with modern technologies and enterprise-grade patterns, capable of handling long running data stream from AI even in the event of server failure.
 
 ## Features
 
