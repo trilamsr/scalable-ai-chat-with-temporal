@@ -1,10 +1,11 @@
 # syntax=docker/dockerfile:1.4
 # Backend Development Dockerfile - Optimized for monorepo with hot-reloading
+# Using Debian-based image for Temporal SDK compatibility (requires glibc)
 
-FROM node:18-alpine
+FROM node:18
 
 # Install additional tools for development
-RUN apk add --no-cache git
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

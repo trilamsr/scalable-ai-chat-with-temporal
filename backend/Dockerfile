@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1.4
 # Backend Production Dockerfile - Optimized multi-stage build for monorepo
+# Using Debian-based image for Temporal SDK compatibility (requires glibc)
 
 # Stage 1: Build stage (shared + backend)
-FROM node:18-alpine AS builder
+FROM node:18 AS builder
 
 WORKDIR /app
 
@@ -28,14 +29,14 @@ RUN npm run build --workspace=shared && \
     npm run build --workspace=backend
 
 # Stage 2: Production runtime
-FROM node:18-alpine
+FROM node:18-slim
 
 # Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+RUN apt-get update && apt-get install -y --no-install-recommends dumb-init && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+RUN groupadd --gid 1001 nodejs && \
+    useradd --uid 1001 --gid nodejs --shell /bin/bash --create-home nodejs
 
 WORKDIR /app
 
