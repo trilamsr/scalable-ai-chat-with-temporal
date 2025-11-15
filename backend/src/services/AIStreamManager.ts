@@ -15,6 +15,8 @@ import {
   ServerToClientEvents,
   ClientToServerEvents,
   Message,
+  AI_USER,
+  AI_STREAM_TIMEOUTS,
 } from '@chat-app/shared';
 import { AIService } from './AIService.js';
 import { ChatHistoryService } from '../chatHistory.js';
@@ -49,8 +51,11 @@ export class AIStreamManager {
     this.chatHistory = chatHistory;
     this.activeSessions = new Map();
 
-    // Clean up stale sessions every 5 minutes
-    this.cleanupInterval = setInterval(() => this.cleanupStaleSessions(), 5 * 60 * 1000);
+    // Clean up stale sessions periodically
+    this.cleanupInterval = setInterval(
+      () => this.cleanupStaleSessions(),
+      AI_STREAM_TIMEOUTS.STALE_SESSION_CLEANUP_INTERVAL_MS
+    );
 
     logger.info('AI Stream Manager initialized');
   }
@@ -77,7 +82,7 @@ export class AIStreamManager {
     io: TypedServer,
     roomId: string,
     userMessage: string,
-    conversationHistory?: string[]
+    conversationHistory?: Message[]
   ): Promise<void> {
     // Check if there's already an active stream
     if (this.isStreamActive(roomId)) {
@@ -110,15 +115,15 @@ export class AIStreamManager {
     io.to(roomId).emit('ai_stream_start', startPayload);
 
     try {
-      // Build conversation context
+      // Build conversation context from history with proper roles
       const messages = conversationHistory
-        ? conversationHistory.map((text, index) => ({
-            role: (index % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
-            content: text,
+        ? conversationHistory.map((msg) => ({
+            role: msg.role || (msg.userId === AI_USER.USER_ID ? 'assistant' : 'user') as 'user' | 'assistant',
+            content: msg.text,
           }))
         : [];
 
-      // Add current user message
+      // Add current user message to context
       messages.push({
         role: 'user',
         content: userMessage,
@@ -170,12 +175,13 @@ export class AIStreamManager {
           // Save AI message to chat history
           const aiMessage: Message = {
             id: messageId,
-            username: 'AI Assistant',
-            userId: 'ai',
+            username: AI_USER.USERNAME,
+            userId: AI_USER.USER_ID,
             text: session.accumulatedText,
             timestamp,
             roomId,
             isSystem: false,
+            role: 'assistant', // Mark as assistant message for AI conversation context
           };
 
           try {
@@ -209,7 +215,7 @@ export class AIStreamManager {
       setTimeout(() => {
         this.activeSessions.delete(roomId);
         logger.debug({ roomId, messageId }, 'Removed completed AI stream session');
-      }, 60000); // Keep for 1 minute
+      }, AI_STREAM_TIMEOUTS.SESSION_CLEANUP_MS);
     }
   }
 
@@ -228,11 +234,11 @@ export class AIStreamManager {
   }
 
   /**
-   * Clean up stale sessions (older than 10 minutes)
+   * Clean up stale sessions
    */
   private cleanupStaleSessions(): void {
     const now = new Date();
-    const staleThreshold = 10 * 60 * 1000; // 10 minutes
+    const staleThreshold = AI_STREAM_TIMEOUTS.STALE_SESSION_THRESHOLD_MS;
 
     for (const [, session] of this.activeSessions.entries()) {
       const age = now.getTime() - session.startedAt.getTime();

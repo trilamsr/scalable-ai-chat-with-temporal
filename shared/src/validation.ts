@@ -1,19 +1,10 @@
 import { z } from 'zod';
+import { VALIDATION_LIMITS } from './constants';
 
 /**
  * Validation schemas for chat application
  * Provides runtime validation for all data types
  */
-
-// Constants for validation
-export const VALIDATION_LIMITS = {
-  USERNAME_MIN_LENGTH: 1,
-  USERNAME_MAX_LENGTH: 50,
-  MESSAGE_MIN_LENGTH: 1,
-  MESSAGE_MAX_LENGTH: 5000,
-  ROOM_ID_MIN_LENGTH: 1,
-  ROOM_ID_MAX_LENGTH: 100,
-} as const;
 
 // Username validation
 export const usernameSchema = z

@@ -9,7 +9,14 @@ const containerLogger = createChildLogger({ module: 'service-container' });
 
 /**
  * Service container for dependency injection
- * Manages lifecycle and dependencies of all services
+ *
+ * Uses Singleton pattern to ensure a single instance of all services
+ * throughout the application lifecycle. This provides:
+ * - Centralized service management
+ * - Consistent dependency injection
+ * - Easy testing via reset()
+ *
+ * All services should be accessed through this container, not instantiated directly.
  */
 export class ServiceContainer {
   private static instance: ServiceContainer | null = null;
@@ -37,6 +44,7 @@ export class ServiceContainer {
 
   /**
    * Get the singleton service container instance
+   * Creates the instance on first call (lazy initialization)
    * @returns Service container instance
    */
   public static getInstance(): ServiceContainer {
@@ -48,6 +56,7 @@ export class ServiceContainer {
 
   /**
    * Reset the service container (useful for testing)
+   * Clears the singleton instance, forcing a new one on next getInstance()
    */
   public static reset(): void {
     containerLogger.info('Resetting service container');

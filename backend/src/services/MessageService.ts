@@ -80,6 +80,7 @@ export class MessageService {
       text: validatedData.text,
       timestamp: new Date().toISOString(),
       roomId,
+      role: 'user', // Mark as user message for AI conversation context
     };
 
     serviceLogger.info(

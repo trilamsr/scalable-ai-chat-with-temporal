@@ -1,5 +1,4 @@
-import { Message } from '@chat-app/shared';
-import { SYSTEM_USER } from './constants';
+import { Message, SYSTEM_USER } from '@chat-app/shared';
 
 export function createSystemMessage(
   username: string,

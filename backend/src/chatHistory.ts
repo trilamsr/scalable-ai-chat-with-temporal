@@ -1,7 +1,6 @@
 import { redis } from './redis';
-import { Message, createChildLogger } from '@chat-app/shared';
+import { Message, createChildLogger, REDIS_KEYS, CHAT_CONFIG } from '@chat-app/shared';
 import { handleRedisError } from './utils/errorHelpers';
-import { REDIS_KEYS, CHAT_HISTORY } from './utils/constants';
 
 const historyLogger = createChildLogger({ module: 'chat-history' });
 
@@ -29,16 +28,21 @@ export class ChatHistoryService {
 
     try {
       // XADD chat:messages:room * field1 value1 field2 value2 ...
-      const streamId = await redis.xadd(
-        streamKey,
-        '*', // Auto-generate ID based on timestamp
+      const fields = [
         'id', message.id,
         'username', message.username,
         'userId', message.userId,
         'text', message.text,
         'timestamp', message.timestamp,
-        'roomId', roomId
-      );
+        'roomId', roomId,
+      ];
+
+      // Add role if present (for AI conversation context)
+      if (message.role) {
+        fields.push('role', message.role);
+      }
+
+      const streamId = await redis.xadd(streamKey, '*', ...fields);
 
       historyLogger.debug(
         { messageId: message.id, streamId, roomId },
@@ -58,7 +62,7 @@ export class ChatHistoryService {
    * @param count - Number of messages to retrieve (default: 50)
    * @returns Array of messages in chronological order
    */
-  async getRecentMessages(roomId: string, count: number = CHAT_HISTORY.DEFAULT_MESSAGE_COUNT): Promise<Message[]> {
+  async getRecentMessages(roomId: string, count: number = CHAT_CONFIG.DEFAULT_MESSAGE_COUNT): Promise<Message[]> {
     const streamKey = this.getRoomKey(roomId);
 
     try {
@@ -80,14 +84,17 @@ export class ChatHistoryService {
             fieldMap[fields[i]] = fields[i + 1];
           }
 
-          return {
+          const message: Message = {
             id: fieldMap.id,
             username: fieldMap.username,
             userId: fieldMap.userId,
             text: fieldMap.text,
             timestamp: fieldMap.timestamp,
             roomId: fieldMap.roomId,
-          } as Message;
+            role: fieldMap.role as 'user' | 'assistant'
+          };
+
+          return message;
         })
         .reverse(); // Reverse to get chronological order (oldest first)
 
@@ -123,7 +130,7 @@ export class ChatHistoryService {
    * @param roomId - Room name
    * @param maxLength - Maximum number of messages to keep (default: 1000)
    */
-  async trimHistory(roomId: string, maxLength: number = CHAT_HISTORY.MAX_HISTORY_LENGTH): Promise<void> {
+  async trimHistory(roomId: string, maxLength: number = CHAT_CONFIG.MAX_HISTORY_LENGTH): Promise<void> {
     const streamKey = this.getRoomKey(roomId);
 
     try {
@@ -159,6 +166,3 @@ export class ChatHistoryService {
     }
   }
 }
-
-// Export singleton instance
-export const chatHistory = new ChatHistoryService();

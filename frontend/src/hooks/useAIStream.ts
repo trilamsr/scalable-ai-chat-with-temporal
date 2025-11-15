@@ -3,7 +3,7 @@
  * Handles AI stream start, chunks, finish, and error events
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TypedSocket } from '../types';
 import {
   ILogger,
@@ -12,6 +12,7 @@ import {
   AIStreamFinishPayload,
   AIStreamErrorPayload,
   Message,
+  AI_USER,
 } from '@chat-app/shared';
 import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHelpers';
 
@@ -45,7 +46,6 @@ export function useAIStream(
   });
 
   const [aiMessage, setAIMessage] = useState<Message | null>(null);
-  const aiMessageRef = useRef<Message | null>(null);
 
   // Handle AI stream start
   const handleAIStreamStart = useCallback(
@@ -64,15 +64,14 @@ export function useAIStream(
       // Create initial AI message
       const initialMessage: Message = {
         id: payload.messageId,
-        username: 'AI Assistant',
-        userId: 'ai',
+        username: AI_USER.USERNAME,
+        userId: AI_USER.USER_ID,
         text: '',
         timestamp: payload.timestamp,
         roomId: payload.roomId,
         isSystem: false,
       };
 
-      aiMessageRef.current = initialMessage;
       setAIMessage(initialMessage);
     },
     [roomId, logger]
@@ -91,14 +90,15 @@ export function useAIStream(
       }));
 
       // Update AI message with accumulated text
-      if (aiMessageRef.current && aiMessageRef.current.id === payload.messageId) {
-        const updatedMessage = {
-          ...aiMessageRef.current,
-          text: payload.accumulatedText,
-        };
-        aiMessageRef.current = updatedMessage;
-        setAIMessage(updatedMessage);
-      }
+      setAIMessage((prevMessage) => {
+        if (prevMessage && prevMessage.id === payload.messageId) {
+          return {
+            ...prevMessage,
+            text: payload.accumulatedText,
+          };
+        }
+        return prevMessage;
+      });
     },
     [roomId, logger]
   );
@@ -120,19 +120,19 @@ export function useAIStream(
         error: null,
       });
 
-      // Finalize AI message
-      if (aiMessageRef.current && aiMessageRef.current.id === payload.messageId) {
-        const finalMessage = {
-          ...aiMessageRef.current,
-          text: payload.fullText,
-          timestamp: payload.timestamp,
-        };
-        aiMessageRef.current = null;
-        setAIMessage(null);
-
-        // Call onFinish callback to add message to regular messages
-        options?.onFinish?.(finalMessage);
-      }
+      // Finalize AI message and call onFinish callback
+      setAIMessage((prevMessage) => {
+        if (prevMessage && prevMessage.id === payload.messageId) {
+          const finalMessage = {
+            ...prevMessage,
+            text: payload.fullText,
+            timestamp: payload.timestamp,
+          };
+          // Call onFinish callback to add message to regular messages
+          options?.onFinish?.(finalMessage);
+        }
+        return null;
+      });
     },
     [roomId, logger, options]
   );
@@ -151,7 +151,6 @@ export function useAIStream(
         error: payload.error,
       });
 
-      aiMessageRef.current = null;
       setAIMessage(null);
     },
     [roomId, logger]

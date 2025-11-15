@@ -1,6 +1,5 @@
 import Redis from 'ioredis';
-import { createChildLogger } from '@chat-app/shared';
-import { REDIS_RETRY } from './utils/constants';
+import { createChildLogger, REDIS_RETRY } from '@chat-app/shared';
 
 const redisLogger = createChildLogger({ module: 'redis' });
 

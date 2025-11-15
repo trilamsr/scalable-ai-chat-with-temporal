@@ -4,8 +4,7 @@ import { Server } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import cors from 'cors';
 import { initializeSocket, getConnectedUsersCount } from './socket';
-import { logger, ServerToClientEvents, ClientToServerEvents } from '@chat-app/shared';
-import { DEFAULT_PORT, DEFAULT_CORS_ORIGIN } from './utils/constants';
+import { logger, ServerToClientEvents, ClientToServerEvents, SHUTDOWN_TIMEOUT_MS, SERVER_DEFAULTS } from '@chat-app/shared';
 import { redis, shutdownRedis, createRedisClient } from './redis';
 import { ServiceContainer } from './services/ServiceContainer';
 
@@ -19,7 +18,7 @@ logger.info('Service container initialized');
 // Configure CORS for Socket.io with type-safe events
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || DEFAULT_CORS_ORIGIN,
+    origin: process.env.FRONTEND_URL || SERVER_DEFAULTS.CORS_ORIGIN,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -72,7 +71,7 @@ app.get('/health', async (_req: Request, res: Response) => {
 // Initialize socket event handlers
 initializeSocket(io, services);
 
-const PORT = process.env.PORT || DEFAULT_PORT;
+const PORT = process.env.PORT || SERVER_DEFAULTS.PORT;
 
 server.listen(PORT, () => {
   logger.info({ port: PORT }, 'WebSocket server running');
@@ -123,7 +122,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
   setTimeout(() => {
     logger.error('Forced shutdown after timeout');
     process.exit(1);
-  }, 10000); // 10 second timeout
+  }, SHUTDOWN_TIMEOUT_MS);
 }
 
 // Register shutdown handlers

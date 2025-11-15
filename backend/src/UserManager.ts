@@ -114,6 +114,3 @@ export class UserManager {
     return this.connectedUsers.has(socketId);
   }
 }
-
-// Export singleton instance
-export const userManager = new UserManager();

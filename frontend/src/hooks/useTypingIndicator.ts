@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { UserTypingPayload, ILogger } from '@chat-app/shared';
+import { UserTypingPayload, ILogger, CHAT_CONFIG } from '@chat-app/shared';
 import { TypedSocket } from '../types';
 import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHelpers';
-import { CHAT_CONFIG } from '../utils/constants';
 
 /**
  * Hook for managing typing indicator functionality

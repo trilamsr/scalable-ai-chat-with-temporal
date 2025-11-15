@@ -2,10 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import ChatWindow from './components/ChatWindow';
 import ErrorBoundary from './components/ErrorBoundary';
-import { logger } from '@chat-app/shared';
-import { DEFAULT_BACKEND_URL } from './utils/constants';
+import { logger, SERVER_DEFAULTS } from '@chat-app/shared';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || DEFAULT_BACKEND_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || SERVER_DEFAULTS.BACKEND_URL;
 
 interface UserConfig {
   username: string;

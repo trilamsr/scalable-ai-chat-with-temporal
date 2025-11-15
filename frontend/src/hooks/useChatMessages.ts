@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Message, UserJoinedPayload, UserLeftPayload, ILogger } from '@chat-app/shared';
+import { Message, UserJoinedPayload, UserLeftPayload, ILogger, CHAT_CONFIG } from '@chat-app/shared';
 import { TypedSocket } from '../types';
 import { createSystemMessage } from '../utils/messageHelpers';
 import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHelpers';
-import { CHAT_CONFIG } from '../utils/constants';
 
 /**
  * Hook for managing chat messages and history using a two-phase loading pattern

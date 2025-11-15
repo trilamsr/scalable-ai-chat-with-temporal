@@ -35,6 +35,7 @@ export interface Message extends BaseUserEvent {
   id: string;
   text: string;
   isSystem?: boolean;
+  role?: 'user' | 'assistant'; // AI conversation role
 }
 
 // Acknowledgment response types
