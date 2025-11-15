@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -13,9 +11,15 @@ services:
       - PORT=4000
       - FRONTEND_URL=http://localhost:3000
       - REDIS_URL=redis://redis:6379
+      - TEMPORAL_ADDRESS=temporal:7233
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
     networks:
       - chat-network
     restart: unless-stopped
@@ -43,6 +47,52 @@ services:
       timeout: 3s
       retries: 3
 
+  postgres:
+    image: postgres:15-alpine
+    container_name: chat-postgres
+    environment:
+      - POSTGRES_USER=temporal
+      - POSTGRES_PASSWORD=temporal
+      - POSTGRES_DB=temporal
+    ports:
+      - "5432:5432"
+    networks:
+      - chat-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    container_name: chat-temporal
+    ports:
+      - "7233:7233"  # gRPC port
+      - "8233:8233"  # Web UI port
+    environment:
+      - DB=postgres12
+      - POSTGRES_SEEDS=postgres
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - DB_PORT=5432
+      - SKIP_DB_CREATE=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - chat-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "temporal:7233"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
   frontend:
     build:
       context: ./frontend
@@ -66,3 +116,4 @@ networks:
 
 volumes:
   redis-data:
+  postgres-data:
