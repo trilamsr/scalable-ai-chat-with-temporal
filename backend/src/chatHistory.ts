@@ -91,7 +91,7 @@ export class ChatHistoryService {
             text: fieldMap.text,
             timestamp: fieldMap.timestamp,
             roomId: fieldMap.roomId,
-            role: fieldMap.role as 'user' | 'assistant'
+            role: fieldMap.role as 'user' | 'assistant' || 'user'
           };
 
           return message;
@@ -153,13 +153,6 @@ export class ChatHistoryService {
         const streamKey = this.getRoomKey(roomId);
         await redis.del(streamKey);
         historyLogger.warn({ roomId }, 'Room chat history cleared');
-      } else {
-        // Clear all room histories (dangerous!)
-        const keys = await redis.keys(`${REDIS_KEYS.CHAT_MESSAGES}:*`);
-        if (keys.length > 0) {
-          await redis.del(...keys);
-          historyLogger.warn({ keysCleared: keys.length }, 'All room chat histories cleared');
-        }
       }
     } catch (error) {
       handleRedisError(historyLogger, error, { roomId }, 'Failed to clear chat history');
