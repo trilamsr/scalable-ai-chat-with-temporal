@@ -1,12 +1,12 @@
-import express, { Request, Response } from 'express';
 import http from 'http';
-import { Server } from 'socket.io';
+import { logger, ServerToClientEvents, ClientToServerEvents, SHUTDOWN_TIMEOUT_MS, SERVER_DEFAULTS, SOCKET_CONFIG } from '@chat-app/shared';
 import { createAdapter } from '@socket.io/redis-adapter';
 import cors from 'cors';
-import { initializeSocket, getConnectedUsersCount } from './socket';
-import { logger, ServerToClientEvents, ClientToServerEvents, SHUTDOWN_TIMEOUT_MS, SERVER_DEFAULTS, SOCKET_CONFIG } from '@chat-app/shared';
+import express, { Request, Response } from 'express';
+import { Server } from 'socket.io';
 import { redis, shutdownRedis, createRedisClient } from './redis';
 import { ServiceContainer } from './services/ServiceContainer';
+import { initializeSocket, getConnectedUsersCount } from './socket';
 import { getTemporalClient, closeTemporalClient } from './temporal/client';
 import { startTemporalWorker, stopTemporalWorker } from './temporal/worker';
 import { getErrorMessage } from './utils/errorHelpers';
