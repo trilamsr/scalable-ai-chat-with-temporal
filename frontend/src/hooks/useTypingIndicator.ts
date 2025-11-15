@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
 import { UserTypingPayload, ILogger, CHAT_CONFIG } from '@chat-app/shared';
+import { useState, useEffect, useRef } from 'react';
 import { TypedSocket } from '../types';
 import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHelpers';
 
@@ -18,7 +18,9 @@ export function useTypingIndicator(
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      return;
+    }
 
     const handleUserTyping = (data: UserTypingPayload) => {
       if (data.isTyping) {
@@ -46,7 +48,9 @@ export function useTypingIndicator(
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
     onChange(e.target.value);
 
-    if (!socket || !isConnected) return;
+    if (!socket || !isConnected) {
+      return;
+    }
 
     socket.emit('typing', true);
 

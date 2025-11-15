@@ -1,5 +1,5 @@
-import { Server } from 'socket.io';
 import { ServerToClientEvents, ClientToServerEvents } from '@chat-app/shared';
+import { Server } from 'socket.io';
 import { ServiceContainer } from '../services/ServiceContainer';
 
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;

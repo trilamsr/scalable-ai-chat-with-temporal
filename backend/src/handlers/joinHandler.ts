@@ -5,8 +5,8 @@ import {
   roomIdSchema,
   UserJoinedPayload,
 } from '@chat-app/shared';
-import { TypedServer, TypedSocket } from '../types';
 import { ServiceContainer } from '../services/ServiceContainer';
+import { TypedServer, TypedSocket } from '../types';
 import { broadcastUsersList } from '../utils/broadcastHelpers';
 
 const logger = createChildLogger({ module: 'join-handler' });

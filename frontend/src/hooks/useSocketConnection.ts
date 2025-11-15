@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { ILogger } from '@chat-app/shared';
+import { useState, useEffect } from 'react';
 import { TypedSocket } from '../types';
 import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHelpers';
 
@@ -17,7 +17,9 @@ export function useSocketConnection(
   const [isConnected, setIsConnected] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      return;
+    }
 
     const handleConnect = () => {
       setIsConnected(true);

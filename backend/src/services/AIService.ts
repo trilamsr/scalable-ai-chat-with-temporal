@@ -1,4 +1,3 @@
-import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import {
   IAIStreamService,
@@ -8,6 +7,7 @@ import {
   createChildLogger,
   AI_CONFIG,
 } from '@chat-app/shared';
+import { streamText } from 'ai';
 import { getErrorMessage } from '../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'AIService' });

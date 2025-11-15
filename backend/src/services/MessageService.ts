@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import {
   Message,
   MessageAck,
@@ -6,6 +5,7 @@ import {
   validateData,
   messageDataSchema,
 } from '@chat-app/shared';
+import { v4 as uuidv4 } from 'uuid';
 import { ChatHistoryService } from '../chatHistory';
 import { UserManager } from '../UserManager';
 import { getErrorMessage } from '../utils/errorHelpers';

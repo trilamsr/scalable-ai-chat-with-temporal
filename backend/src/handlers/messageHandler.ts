@@ -1,6 +1,6 @@
 import { createChildLogger, MessageData, MessageAck } from '@chat-app/shared';
-import { TypedServer, TypedSocket } from '../types';
 import { ServiceContainer } from '../services/ServiceContainer';
+import { TypedServer, TypedSocket } from '../types';
 import { getErrorMessage } from '../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'message-handler' });

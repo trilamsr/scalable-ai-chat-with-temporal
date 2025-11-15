@@ -1,15 +1,15 @@
-import { createChildLogger, UserTypingPayload } from '@chat-app/shared';
-import { TypedServer, TypedSocket } from '../types';
+import { UserTypingPayload } from '@chat-app/shared';
 import { ServiceContainer } from '../services/ServiceContainer';
-
-const logger = createChildLogger({ module: 'typing-handler' });
+import { TypedServer, TypedSocket } from '../types';
 
 export function createTypingHandler(_io: TypedServer, socket: TypedSocket, services: ServiceContainer) {
   return (isTyping: boolean): void => {
     if (services.userManager.isUserConnected(socket.id)) {
       const { username, roomId } = services.userManager.getUserContext(socket.id);
 
-      if (!roomId) return;
+      if (!roomId) {
+        return;
+      }
       const payload: UserTypingPayload = {
         username,
         userId: socket.id,

@@ -1,5 +1,5 @@
-import React from 'react';
 import { Message } from '@chat-app/shared';
+import React from 'react';
 import { formatTimestamp } from '../utils/messageHelpers';
 
 interface MessagesContainerProps {

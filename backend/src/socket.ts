@@ -1,6 +1,4 @@
 import { createChildLogger } from '@chat-app/shared';
-import { ServiceContainer } from './services/ServiceContainer';
-import { TypedServer, TypedSocket } from './types';
 import {
   createJoinHandler,
   createMessageHandler,
@@ -9,6 +7,8 @@ import {
   createClearHistoryHandler,
   createDisconnectHandler,
 } from './handlers';
+import { ServiceContainer } from './services/ServiceContainer';
+import { TypedServer, TypedSocket } from './types';
 import { RateLimiter, DEFAULT_RATE_LIMITS } from './utils/rateLimiter';
 
 const socketLogger = createChildLogger({ module: 'socket' });

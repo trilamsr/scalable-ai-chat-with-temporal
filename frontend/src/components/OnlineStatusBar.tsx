@@ -1,5 +1,5 @@
-import React from 'react';
 import { UserInfo } from '@chat-app/shared';
+import React from 'react';
 
 interface OnlineStatusBarProps {
   onlineUsers: UserInfo[];

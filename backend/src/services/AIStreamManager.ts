@@ -1,4 +1,3 @@
-import { Server } from 'socket.io';
 import {
   createChildLogger,
   ServerToClientEvents,
@@ -6,6 +5,7 @@ import {
   Message,
 } from '@chat-app/shared';
 import { Client } from '@temporalio/client';
+import { Server } from 'socket.io';
 import { TEMPORAL_CONFIG } from '../temporal/client';
 import { getErrorMessage } from '../utils/errorHelpers';
 
@@ -26,7 +26,9 @@ export class AIStreamManager {
   }
 
   async isStreamActive(roomId: string): Promise<boolean> {
-    if (!this.temporalClient) return false;
+    if (!this.temporalClient) {
+return false;
+}
 
     try {
 

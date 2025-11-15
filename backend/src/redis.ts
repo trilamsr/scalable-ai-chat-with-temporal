@@ -1,5 +1,5 @@
-import Redis from 'ioredis';
 import { createChildLogger, REDIS_RETRY } from '@chat-app/shared';
+import Redis from 'ioredis';
 
 const logger = createChildLogger({ module: 'redis' });
 
@@ -32,7 +32,6 @@ export function createRedisClient(lazyConnect: boolean = false): Redis {
 }
 
 export const redis = createRedisClient();
-
 export async function shutdownRedis(): Promise<void> {
   logger.info('Shutting down Redis client');
   await redis.quit();

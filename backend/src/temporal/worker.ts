@@ -1,12 +1,12 @@
-import { Worker, NativeConnection } from '@temporalio/worker';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import { createChildLogger, AI_CONFIG } from '@chat-app/shared';
-import { TEMPORAL_CONFIG } from './client';
-import * as activities from './activities/aiActivities';
+import { Worker, NativeConnection } from '@temporalio/worker';
 import { Server } from 'socket.io';
 import { ServiceContainer } from '../services/ServiceContainer';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import { getErrorMessage } from '../utils/errorHelpers';
+import * as activities from './activities/aiActivities';
+import { TEMPORAL_CONFIG } from './client';
 
 const logger = createChildLogger({ module: 'temporal-worker' });
 const __filename = fileURLToPath(import.meta.url);

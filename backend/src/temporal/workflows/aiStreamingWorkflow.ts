@@ -1,6 +1,6 @@
+import { Message } from '@chat-app/shared';
 import { proxyActivities } from '@temporalio/workflow';
 import type * as activities from '../activities/aiActivities';
-import { Message } from '@chat-app/shared';
 
 const { streamAIResponse, saveCompletedResponse } = proxyActivities<typeof activities>({
   startToCloseTimeout: '5 minutes',

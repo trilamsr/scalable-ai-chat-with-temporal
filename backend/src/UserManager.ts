@@ -69,7 +69,9 @@ export class UserManager {
 
     let count = 0;
     for (const userData of this.connectedUsers.values()) {
-      if (userData.roomId === roomId) count++;
+      if (userData.roomId === roomId) {
+        count++;
+      }
     }
     return count;
   }

@@ -1,5 +1,5 @@
-import { Connection, Client } from '@temporalio/client';
 import { createChildLogger } from '@chat-app/shared';
+import { Connection, Client } from '@temporalio/client';
 import { getErrorMessage } from '../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'temporal-client' });

@@ -84,7 +84,6 @@ app.get('/health', async (_req: Request, res: Response) => {
   try {
     await redis.ping();
     const userCount = getConnectedUsersCount(services);
-
     res.json({
       status: 'ok',
       message: 'WebSocket server is running',

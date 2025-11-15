@@ -1,10 +1,10 @@
-import { ChatHistoryService } from '../chatHistory.js';
-import { UserManager } from '../UserManager.js';
-import { MessageService } from './MessageService.js';
-import { AIService } from './AIService.js';
-import { AIStreamManager } from './AIStreamManager.js';
 import { createChildLogger } from '@chat-app/shared';
 import { Client } from '@temporalio/client';
+import { ChatHistoryService } from '../chatHistory.js';
+import { UserManager } from '../UserManager.js';
+import { AIService } from './AIService.js';
+import { AIStreamManager } from './AIStreamManager.js';
+import { MessageService } from './MessageService.js';
 
 const logger = createChildLogger({ module: 'service-container' });
 

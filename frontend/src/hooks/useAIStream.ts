@@ -1,5 +1,3 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { TypedSocket } from '../types';
 import {
   ILogger,
   AIStreamStartPayload,
@@ -9,6 +7,8 @@ import {
   Message,
   AI_USER,
 } from '@chat-app/shared';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { TypedSocket } from '../types';
 import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHelpers';
 
 export interface AIStreamState {
@@ -49,7 +49,9 @@ export function useAIStream(
 
   const handleAIStreamStart = useCallback(
     (payload: AIStreamStartPayload) => {
-      if (payload.roomId !== roomId) return;
+      if (payload.roomId !== roomId) {
+        return;
+      }
 
       logger.info({ messageId: payload.messageId }, 'AI stream started');
 
@@ -77,7 +79,9 @@ export function useAIStream(
 
   const handleAIStreamChunk = useCallback(
     (payload: AIStreamChunkPayload) => {
-      if (payload.roomId !== roomId) return;
+      if (payload.roomId !== roomId) {
+        return;
+      }
 
       setAIStreamState((prev) => ({
         ...prev,
@@ -99,7 +103,9 @@ export function useAIStream(
 
   const handleAIStreamFinish = useCallback(
     (payload: AIStreamFinishPayload) => {
-      if (payload.roomId !== roomId) return;
+      if (payload.roomId !== roomId) {
+        return;
+      }
 
       logger.info(
         { messageId: payload.messageId, textLength: payload.fullText.length, usage: payload.usage },
@@ -130,7 +136,9 @@ export function useAIStream(
 
   const handleAIStreamError = useCallback(
     (payload: AIStreamErrorPayload) => {
-      if (payload.roomId !== roomId) return;
+      if (payload.roomId !== roomId) {
+        return;
+      }
 
       logger.error({ messageId: payload.messageId, error: payload.error }, 'AI stream error');
 
@@ -147,7 +155,9 @@ export function useAIStream(
   );
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      return;
+    }
 
     const eventMap = {
       ai_stream_start: handleAIStreamStart,

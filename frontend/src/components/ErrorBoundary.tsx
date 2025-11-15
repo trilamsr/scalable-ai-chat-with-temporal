@@ -1,5 +1,5 @@
-import { Component, ErrorInfo, ReactNode } from 'react';
 import { logger } from '@chat-app/shared';
+import { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;

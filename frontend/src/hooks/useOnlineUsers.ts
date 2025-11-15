@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { UserInfo, ILogger } from '@chat-app/shared';
+import { useState, useEffect } from 'react';
 import { TypedSocket } from '../types';
 import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHelpers';
 
@@ -11,18 +11,14 @@ export function useOnlineUsers(socket: TypedSocket, logger: ILogger): UseOnlineU
   const [onlineUsers, setOnlineUsers] = useState<UserInfo[]>([]);
 
   useEffect(() => {
-    if (!socket) return;
-
+    if (!socket) {
+      return;
+    }
     const handleUsersList = (users: UserInfo[]) => {
-      setOnlineUsers(users);
+      setOnlineUsers(users)
     };
-
-    const eventMap = {
-      users_list: handleUsersList,
-    };
-
+    const eventMap = { users_list: handleUsersList };
     registerSocketEvents(socket, eventMap);
-
     return () => {
       unregisterSocketEvents(socket, eventMap);
     };

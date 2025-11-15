@@ -1,8 +1,8 @@
+import { logger, SERVER_DEFAULTS } from '@chat-app/shared';
 import React, { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import ChatWindow from './components/ChatWindow';
 import ErrorBoundary from './components/ErrorBoundary';
-import { logger, SERVER_DEFAULTS } from '@chat-app/shared';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || SERVER_DEFAULTS.BACKEND_URL;
 
@@ -23,7 +23,7 @@ const App: React.FC = () => {
   useEffect(() => {
     logger.info({ backendUrl: BACKEND_URL, socketCount: userConfigs.length }, 'Initializing socket connections');
 
-    const newSockets = userConfigs.map((config, index) => {
+    const newSockets = userConfigs.map((_config, _index) => {
       const socket = io(BACKEND_URL, {
         transports: ['websocket', 'polling'],
         reconnection: true,

@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createChildLogger } from '@chat-app/shared';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useAIStream } from '../hooks/useAIStream';
+import { useChatMessages } from '../hooks/useChatMessages';
+import { useOnlineUsers } from '../hooks/useOnlineUsers';
+import { useSocketConnection } from '../hooks/useSocketConnection';
+import { useTypingIndicator } from '../hooks/useTypingIndicator';
 import { ChatWindowProps } from '../types';
 import Header from './Header';
-import OnlineStatusBar from './OnlineStatusBar';
-import MessagesContainer from './MessagesContainer';
 import MessageInputForm from './MessageInputForm';
-import { useChatMessages } from '../hooks/useChatMessages';
-import { useSocketConnection } from '../hooks/useSocketConnection';
-import { useOnlineUsers } from '../hooks/useOnlineUsers';
-import { useTypingIndicator } from '../hooks/useTypingIndicator';
-import { useAIStream } from '../hooks/useAIStream';
+import MessagesContainer from './MessagesContainer';
+import OnlineStatusBar from './OnlineStatusBar';
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, color, roomId }) => {
   const [inputMessage, setInputMessage] = useState<string>('');
@@ -80,7 +80,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
   };
 
   const handleClearHistory = () => {
-    if (!socket || !isConnected) return;
+    if (!socket || !isConnected) {
+      return;
+    }
     socket.emit('clear_history', roomId, (response) => {
       if (response?.success) {
         logger.info({ roomId }, 'Chat history cleared successfully');

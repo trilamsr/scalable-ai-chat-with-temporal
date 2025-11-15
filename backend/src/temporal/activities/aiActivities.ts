@@ -1,4 +1,3 @@
-import { Context } from '@temporalio/activity';
 import {
   Message,
   createChildLogger,
@@ -10,8 +9,9 @@ import {
   AI_SYSTEM_PROMPT,
   AI_CONFIG,
 } from '@chat-app/shared';
-import { ServiceContainer } from '../../services/ServiceContainer';
+import { Context } from '@temporalio/activity';
 import { Server } from 'socket.io';
+import { ServiceContainer } from '../../services/ServiceContainer';
 import { getErrorMessage } from '../../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'ai-activities' });
@@ -134,19 +134,15 @@ export async function saveCompletedResponse(params: SaveCompletedResponseParams)
   if (!services) {
     throw new Error('Activities not initialized with services');
   }
-
   const { message } = params;
-
   logger.info({ messageId: message.id, roomId: message.roomId }, 'Saving AI response to history');
 
   try {
     const streamId = await services.chatHistory.addMessage(message);
-
     if (!streamId) {
       logger.error({ messageId: message.id }, 'Failed to save AI message (null streamId)');
       return false;
     }
-
     logger.info({ messageId: message.id, streamId, roomId: message.roomId }, 'AI message saved to history');
     return true;
   } catch (error) {

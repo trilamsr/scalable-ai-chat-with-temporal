@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
 import { Message, UserJoinedPayload, UserLeftPayload, ILogger, CHAT_CONFIG } from '@chat-app/shared';
+import { useState, useEffect, useCallback } from 'react';
 import { TypedSocket } from '../types';
 import { createSystemMessage } from '../utils/messageHelpers';
 import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHelpers';
@@ -39,7 +39,9 @@ export function useChatMessages(socket: TypedSocket, logger: ILogger): UseChatMe
   }, [addMessage]);
 
   useEffect(() => {
-    if (!socket || isHistoryLoaded) return;
+    if (!socket || isHistoryLoaded) {
+      return;
+    }
 
     const handleChatHistory = (historyMessages: Message[]) => {
       logger.info({ messageCount: historyMessages.length }, 'Chat history received');
@@ -59,7 +61,9 @@ export function useChatMessages(socket: TypedSocket, logger: ILogger): UseChatMe
   }, [socket, logger, isHistoryLoaded]);
 
   useEffect(() => {
-    if (!socket || !isHistoryLoaded) return;
+    if (!socket || !isHistoryLoaded) {
+      return;
+    }
 
     logger.info('History loaded, subscribing to real-time events');
 
