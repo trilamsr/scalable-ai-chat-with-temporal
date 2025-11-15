@@ -48,10 +48,9 @@ export class ServiceContainer {
     ServiceContainer.instance = null;
   }
 
-  public async cleanup(): Promise<void> {
+  public cleanup(): void {
     logger.info('Cleaning up service container');
     this.aiStreamManager.shutdown();
-
   }
 }
 

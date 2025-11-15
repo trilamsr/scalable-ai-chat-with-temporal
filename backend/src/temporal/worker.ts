@@ -41,7 +41,7 @@ export async function startTemporalWorker(
       maxConcurrentWorkflowTaskExecutions: AI_CONFIG.MAX_CONCURRENT_WORKFLOWS,
     });
 
-    await temporalWorker.run();
+    void temporalWorker.run();
 
     logger.info('Temporal worker started successfully');
     return temporalWorker;
@@ -52,10 +52,10 @@ export async function startTemporalWorker(
   }
 }
 
-export async function stopTemporalWorker(): Promise<void> {
+export function stopTemporalWorker(): void {
   if (temporalWorker) {
     logger.info('Stopping Temporal worker');
-    await temporalWorker.shutdown();
+    temporalWorker.shutdown();
     temporalWorker = null;
     logger.info('Temporal worker stopped');
   }

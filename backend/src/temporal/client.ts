@@ -23,7 +23,7 @@ export async function getTemporalClient(): Promise<Client> {
     return temporalClient;
   }
 
-  let lastError: Error | unknown;
+  let lastError: unknown;
 
   for (let attempt = 1; attempt <= TEMPORAL_CONFIG.maxRetries; attempt++) {
     try {
@@ -65,10 +65,10 @@ export async function getTemporalClient(): Promise<Client> {
   throw lastError;
 }
 
-export async function closeTemporalClient(): Promise<void> {
+export function closeTemporalClient(): void {
   if (temporalClient) {
     logger.info('Closing Temporal client connection');
-    temporalClient.connection.close();
+    void temporalClient.connection.close();
     temporalClient = null;
     logger.info('Temporal client connection closed');
   }

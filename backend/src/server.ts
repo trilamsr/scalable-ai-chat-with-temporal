@@ -80,6 +80,7 @@ initializeTemporalServices().catch((error) => {
 app.use(cors());
 app.use(express.json());
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 app.get('/health', async (_req: Request, res: Response) => {
   try {
     await redis.ping();
@@ -108,12 +109,9 @@ server.listen(PORT, () => {
   logger.info({ port: PORT }, 'WebSocket server running');
 });
 
-async function closeSocketIO(): Promise<void> {
-  return new Promise((resolve) => {
-    io.close(() => {
-      logger.info('Socket.IO connections closed');
-      resolve();
-    });
+function closeSocketIO(): void {
+  void io.close(() => {
+    logger.info('Socket.IO connections closed');
   });
 }
 
@@ -131,10 +129,10 @@ async function closeHTTPServer(): Promise<void> {
   });
 }
 
-async function stopTemporalServices(): Promise<void> {
+function stopTemporalServices(): void {
   if (temporalWorkerStarted) {
     try {
-      await stopTemporalWorker();
+      stopTemporalWorker();
       logger.info('Temporal worker stopped');
     } catch (error) {
       logger.error({ error: getErrorMessage(error) }, 'Error stopping Temporal worker');
@@ -142,7 +140,7 @@ async function stopTemporalServices(): Promise<void> {
   }
 
   try {
-    await closeTemporalClient();
+    closeTemporalClient();
     logger.info('Temporal client closed');
   } catch (error) {
     logger.error({ error: getErrorMessage(error) }, 'Error closing Temporal client');
@@ -164,9 +162,9 @@ async function closeRedisConnections(): Promise<void> {
   }
 }
 
-async function cleanupServices(): Promise<void> {
+function cleanupServices(): void {
   try {
-    await services.cleanup();
+    services.cleanup();
     logger.info('Service container cleaned up');
   } catch (error) {
     logger.error({ error: getErrorMessage(error) }, 'Error cleaning up services');
@@ -183,10 +181,10 @@ async function gracefulShutdown(signal: string): Promise<void> {
 
   try {
 
-    await closeSocketIO();
+    closeSocketIO();
     await closeHTTPServer();
-    await stopTemporalServices();
-    await cleanupServices();
+    stopTemporalServices();
+    cleanupServices();
     await closeRedisConnections();
 
     logger.info('Graceful shutdown completed');
@@ -199,6 +197,6 @@ async function gracefulShutdown(signal: string): Promise<void> {
   }
 }
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
 

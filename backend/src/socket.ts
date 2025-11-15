@@ -15,17 +15,20 @@ const socketLogger = createChildLogger({ module: 'socket' });
 
 const rateLimiter = new RateLimiter(DEFAULT_RATE_LIMITS);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function withRateLimit<T extends (...args: any[]) => any>(
   eventName: string,
   handler: T,
   socket: TypedSocket
 ): T {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return ((...args: any[]) => {
     if (!rateLimiter.check(socket.id, eventName)) {
       socketLogger.error({ socketId: socket.id, eventName }, 'Rate limit exceeded');
       socket.emit('rate_limit_error', { message: 'Rate limit exceeded. Please slow down.' });
       return;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return
     return handler(...args);
   }) as T;
 }

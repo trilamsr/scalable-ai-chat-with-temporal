@@ -1,5 +1,6 @@
 import { Socket } from 'socket.io-client';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SocketEventHandler = (...args: any[]) => void;
 
 interface SocketEventMap {

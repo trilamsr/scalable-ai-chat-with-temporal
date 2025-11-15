@@ -12,11 +12,11 @@ import { broadcastUsersList } from '../utils/broadcastHelpers';
 const logger = createChildLogger({ module: 'join-handler' });
 
 export function createJoinHandler(io: TypedServer, socket: TypedSocket, services: ServiceContainer) {
-  return (
+  return async (
     username: string,
     roomId: string,
     callback?: (response: { success: boolean; error?: string }) => void
-  ): void => {
+  ): Promise<void> => {
 
     const usernameValidation = validateData(usernameSchema, username);
     if (!usernameValidation.success) {
@@ -30,7 +30,7 @@ export function createJoinHandler(io: TypedServer, socket: TypedSocket, services
       return;
     }
 
-    socket.join(roomId);
+    await socket.join(roomId);
 
     services.userManager.addUser(socket.id, username, roomId);
     logger.info({ username, socketId: socket.id, roomId }, 'User joined room');

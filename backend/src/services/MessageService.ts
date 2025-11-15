@@ -18,10 +18,10 @@ export class MessageService {
     private readonly userManager: UserManager
   ) {}
 
-  async createMessage(
+  createMessage(
     data: unknown,
     socketId: string
-  ): Promise<{ success: true; message: Message } | { success: false; error: string; code?: string }> {
+  ): { success: true; message: Message } | { success: false; error: string; code?: string } {
 
     const validation = validateData(messageDataSchema, data);
     if (!validation.success) {
@@ -111,7 +111,7 @@ export class MessageService {
     | { success: false; error: string; code?: string }
   > {
 
-    const createResult = await this.createMessage(data, socketId);
+    const createResult = this.createMessage(data, socketId);
     if (!createResult.success) {
       return createResult;
     }

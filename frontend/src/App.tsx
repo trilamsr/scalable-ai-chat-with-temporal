@@ -2,6 +2,7 @@ import { logger, SERVER_DEFAULTS } from '@chat-app/shared';
 import React, { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import ChatWindow from './components/ChatWindow';
+// eslint-disable-next-line import/no-named-as-default
 import ErrorBoundary from './components/ErrorBoundary';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || SERVER_DEFAULTS.BACKEND_URL;

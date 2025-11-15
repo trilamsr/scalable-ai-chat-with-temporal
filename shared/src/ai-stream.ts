@@ -24,18 +24,21 @@ export interface AITool {
     properties: Record<string, AIToolParameter>;
     required?: string[];
   };
-  execute: (args: Record<string, any>) => Promise<any> | any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  execute: (args: Record<string, any>) => any;
 }
 
 export interface AIToolCall {
   id: string;
   name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   arguments: Record<string, any>;
 }
 
 export interface AIToolResult {
   toolCallId: string;
   toolName: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result: any;
   error?: string;
 }

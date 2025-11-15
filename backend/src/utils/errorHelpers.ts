@@ -7,6 +7,7 @@ export function getErrorMessage(error: unknown): string {
 export function handleRedisError(
   logger: ILogger,
   error: unknown,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   context: Record<string, any>,
   message: string,
   shouldThrow = true
