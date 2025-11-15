@@ -48,12 +48,7 @@ A production-ready, horizontally scalable real-time chat application with AI int
    cd scalable-ai-chat-app
    ```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
+2. **Set up environment variables**
 
    Create a `.env` file in the `root`/`backend` directory:
    ```bash
@@ -61,11 +56,11 @@ A production-ready, horizontally scalable real-time chat application with AI int
    ```
    Further customization can be found at /shared/src/constants.ts
 
-4. **Start infrastructure services**
+3. **Start infrastructure services**
    ```bash
    make reset-dev
    ```
-5. **Access the application**
+4. **Access the application**
    - Frontend: http://localhost:3000
    - Backend: http://localhost:4000
    - Health check: http://localhost:4000/health
