@@ -8,6 +8,7 @@ import {
   AIStreamErrorPayload,
   AI_USER,
   AI_SYSTEM_PROMPT,
+  AI_CONFIG,
 } from '@chat-app/shared';
 import { ServiceContainer } from '../../services/ServiceContainer';
 import { Server } from 'socket.io';
@@ -100,8 +101,8 @@ export async function streamAIResponse(params: StreamAIResponseParams): Promise<
     for await (const event of services.aiService.streamText({
       system: AI_SYSTEM_PROMPT,
       messages,
-      temperature: 0.7,
-      maxTokens: 1000,
+      temperature: AI_CONFIG.DEFAULT_TEMPERATURE,
+      maxTokens: AI_CONFIG.DEFAULT_MAX_TOKENS,
     })) {
       // Send heartbeat periodically
       Context.current().heartbeat();
@@ -189,7 +190,7 @@ export async function saveCompletedResponse(params: SaveCompletedResponseParams)
     logger.info({ messageId: message.id, streamId, roomId: message.roomId }, 'AI message saved to history');
     return true;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = getErrorMessage(error);
     logger.error({ error: errorMessage, messageId: message.id }, 'Failed to save AI message');
     throw error;
   }

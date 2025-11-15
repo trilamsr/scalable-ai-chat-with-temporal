@@ -4,7 +4,7 @@ import { Server } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import cors from 'cors';
 import { initializeSocket, getConnectedUsersCount } from './socket';
-import { logger, ServerToClientEvents, ClientToServerEvents, SHUTDOWN_TIMEOUT_MS, SERVER_DEFAULTS } from '@chat-app/shared';
+import { logger, ServerToClientEvents, ClientToServerEvents, SHUTDOWN_TIMEOUT_MS, SERVER_DEFAULTS, SOCKET_CONFIG } from '@chat-app/shared';
 import { redis, shutdownRedis, createRedisClient } from './redis';
 import { ServiceContainer } from './services/ServiceContainer';
 import { getTemporalClient, closeTemporalClient } from './temporal/client';
@@ -25,6 +25,10 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
     methods: ['GET', 'POST'],
     credentials: true,
   },
+  // Connection timeout settings
+  pingTimeout: SOCKET_CONFIG.PING_TIMEOUT,
+  pingInterval: SOCKET_CONFIG.PING_INTERVAL,
+  connectTimeout: SOCKET_CONFIG.CONNECT_TIMEOUT,
 });
 
 // Configure Redis Adapter for horizontal scaling
@@ -46,8 +50,13 @@ Promise.all([pubClient.connect(), subClient.connect()])
 // Initialize Temporal client and worker
 let temporalWorkerStarted = false;
 
-getTemporalClient()
-  .then(async (client) => {
+/**
+ * Initialize Temporal services asynchronously
+ * Handles errors gracefully to prevent server crash
+ */
+async function initializeTemporalServices(): Promise<void> {
+  try {
+    const client = await getTemporalClient();
     logger.info('Temporal client initialized');
 
     // Register Temporal client with services
@@ -55,30 +64,34 @@ getTemporalClient()
     services.aiStreamManager.setTemporalClient(client);
 
     // Start Temporal worker in background (non-blocking)
-    // Worker runs workflows and activities
-    startTemporalWorker(io, services)
-      .then(() => {
-        temporalWorkerStarted = true;
-        logger.info('Temporal worker started - AI streaming now using durable workflows');
-      })
-      .catch((error) => {
-        logger.error(
-          { error: getErrorMessage(error) },
-          'Failed to start Temporal worker - AI streaming will not work'
-        );
-      });
-  })
-  .catch((error) => {
+    try {
+      await startTemporalWorker(io, services);
+      temporalWorkerStarted = true;
+      logger.info('Temporal worker started - AI streaming now using durable workflows');
+    } catch (error) {
+      logger.error(
+        { error: getErrorMessage(error) },
+        'Failed to start Temporal worker - AI streaming will not work'
+      );
+    }
+  } catch (error) {
     logger.error(
       { error: getErrorMessage(error) },
       'Failed to initialize Temporal client - AI streaming will not work'
     );
-  });
+  }
+}
+
+initializeTemporalServices().catch((error) => {
+  logger.error(
+    { error: getErrorMessage(error) },
+    'Unhandled error during Temporal initialization'
+  );
+});
 
 app.use(cors());
 app.use(express.json());
 
-// Health check endpoint with Redis connectivity check
 app.get('/health', async (_req: Request, res: Response) => {
   logger.debug('Health check endpoint accessed');
 

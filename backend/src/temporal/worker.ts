@@ -1,5 +1,5 @@
 import { Worker, NativeConnection } from '@temporalio/worker';
-import { createChildLogger } from '@chat-app/shared';
+import { createChildLogger, AI_CONFIG } from '@chat-app/shared';
 import { TEMPORAL_CONFIG } from './client';
 import * as activities from './activities/aiActivities';
 import { Server } from 'socket.io';
@@ -53,8 +53,8 @@ export async function startTemporalWorker(
       taskQueue: TEMPORAL_CONFIG.taskQueue,
       workflowsPath: join(__dirname, 'workflows'),
       activities,
-      maxConcurrentActivityTaskExecutions: 5, // Limit concurrent AI streaming
-      maxConcurrentWorkflowTaskExecutions: 100,
+      maxConcurrentActivityTaskExecutions: AI_CONFIG.MAX_CONCURRENT_ACTIVITIES,
+      maxConcurrentWorkflowTaskExecutions: AI_CONFIG.MAX_CONCURRENT_WORKFLOWS,
     });
 
     // Start the worker

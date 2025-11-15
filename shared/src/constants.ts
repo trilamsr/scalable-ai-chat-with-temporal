@@ -30,6 +30,15 @@ export const AI_USER = {
 // AI System Prompt [B]
 export const AI_SYSTEM_PROMPT = 'You are a helpful assistant in a chat room. Be concise and friendly.'; // [B] AIStreamManager.ts - system prompt for AI
 
+// AI Model Configuration [B]
+export const AI_CONFIG = {
+  DEFAULT_MODEL: 'gpt-4o-mini',          // [B] AIService.ts - default OpenAI model
+  DEFAULT_TEMPERATURE: 0.7,              // [B] aiActivities.ts - controls randomness (0-2)
+  DEFAULT_MAX_TOKENS: 1000,              // [B] aiActivities.ts - maximum tokens in response
+  MAX_CONCURRENT_ACTIVITIES: 5,          // [B] worker.ts - limit concurrent AI streaming
+  MAX_CONCURRENT_WORKFLOWS: 100,         // [B] worker.ts - limit concurrent workflow executions
+} as const;
+
 // Redis configuration [B]
 export const REDIS_KEYS = {
   CHAT_MESSAGES: 'chat:messages',    // [B] chatHistory.ts - Redis stream key prefix for chat messages
@@ -46,6 +55,14 @@ export const SERVER_DEFAULTS = {
   PORT: 4000,                        // [B] server.ts - default backend port
   CORS_ORIGIN: 'http://localhost:3000', // [B] server.ts - default CORS origin
   BACKEND_URL: 'http://localhost:4000', // [F] App.tsx - default backend URL for socket connection
+} as const;
+
+// Socket.IO Configuration [B]
+export const SOCKET_CONFIG = {
+  PING_TIMEOUT: 60000,               // [B] server.ts - 60 seconds - time to wait for pong response
+  PING_INTERVAL: 25000,              // [B] server.ts - 25 seconds - interval between ping packets
+  CONNECT_TIMEOUT: 45000,            // [B] server.ts - 45 seconds - connection timeout
+  ACK_TIMEOUT: 10000,                // [B] handlers - 10 seconds - acknowledgement timeout
 } as const;
 
 // AI Stream session timeouts [B]

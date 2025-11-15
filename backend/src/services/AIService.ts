@@ -11,6 +11,7 @@ import {
   AIStreamEvent,
   AIStreamResult,
   createChildLogger,
+  AI_CONFIG,
 } from '@chat-app/shared';
 import { getErrorMessage } from '../utils/errorHelpers';
 
@@ -23,9 +24,9 @@ export class AIService implements IAIStreamService {
   private apiKey: string;
   private defaultModel: string;
 
-  constructor(apiKey?: string, defaultModel: string = 'gpt-4o-mini') {
+  constructor(apiKey?: string, defaultModel?: string) {
     this.apiKey = apiKey || process.env.OPENAI_API_KEY || '';
-    this.defaultModel = defaultModel;
+    this.defaultModel = defaultModel || AI_CONFIG.DEFAULT_MODEL;
 
     if (!this.apiKey) {
       logger.warn('OpenAI API key not provided. AI features will not work.');

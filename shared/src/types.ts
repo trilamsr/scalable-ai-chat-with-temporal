@@ -102,6 +102,7 @@ export interface ServerToClientEvents {
   users_list: (users: UserInfo[]) => void;
   chat_history: (messages: Message[]) => void;
   validation_error: (error: ValidationError) => void;
+  rate_limit_error: (error: { message: string }) => void;
   ai_stream_start: (payload: AIStreamStartPayload) => void;
   ai_stream_chunk: (payload: AIStreamChunkPayload) => void;
   ai_stream_finish: (payload: AIStreamFinishPayload) => void;
