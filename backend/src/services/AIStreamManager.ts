@@ -1,6 +1,6 @@
 /**
  * AI Stream Manager (Temporal Integration)
- * Manages ongoing AI streaming sessions per room using Temporal workflows
+ * Starts and manages AI streaming workflows using Temporal
  * Provides durability and ensures no tokens are wasted
  */
 
@@ -13,31 +13,20 @@ import {
 } from '@chat-app/shared';
 import { Client } from '@temporalio/client';
 import { TEMPORAL_CONFIG } from '../temporal/client';
+import { getErrorMessage } from '../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'AIStreamManager' });
 
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
 
 /**
- * Represents an active AI streaming session
- */
-interface AIStreamSession {
-  workflowId: string;
-  messageId: string;
-  roomId: string;
-  isActive: boolean;
-  startedAt: Date;
-}
-
-/**
- * Manages AI streaming sessions across rooms using Temporal workflows
+ * Manages AI streaming workflows using Temporal
+ * All state is managed by Temporal - no in-memory session tracking needed
  */
 export class AIStreamManager {
   private temporalClient: Client | null = null;
-  private activeSessions: Map<string, AIStreamSession>; // roomId -> session
 
   constructor() {
-    this.activeSessions = new Map();
     logger.info('AI Stream Manager initialized (Temporal mode)');
   }
 
@@ -50,23 +39,35 @@ export class AIStreamManager {
   }
 
   /**
-   * Check if a room has an active AI streaming session
+   * Check if a room has an active AI streaming workflow
+   * Queries Temporal directly for running workflows
    */
-  isStreamActive(roomId: string): boolean {
-    const session = this.activeSessions.get(roomId);
-    return session?.isActive || false;
+  async isStreamActive(roomId: string): Promise<boolean> {
+    if (!this.temporalClient) return false;
+
+    try {
+      // Query Temporal for running workflows with this room ID prefix
+      const workflows = this.temporalClient.workflow.list({
+        query: `WorkflowId STARTS_WITH "ai-stream-${roomId}-" AND ExecutionStatus = "Running"`,
+      });
+
+      // Check if any workflow exists
+      for await (const _workflow of workflows) {
+        return true; // Found an active workflow
+      }
+      return false;
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      logger.error({ error: errorMessage, roomId }, 'Failed to check stream status');
+      return false;
+    }
   }
 
   /**
-   * Get current session for a room
-   */
-  getSession(roomId: string): AIStreamSession | undefined {
-    return this.activeSessions.get(roomId);
-  }
-
-  /**
-   * Start a new AI streaming session for a room using Temporal workflow
+   * Start a new AI streaming workflow for a room
    * The workflow provides durability and ensures no tokens are wasted
+   *
+   * Note: No need to track sessions in memory - Temporal manages all state
    */
   async startStream(
     _io: TypedServer, // TypedServer passed but not used here - workflows handle Socket.IO via activities
@@ -80,87 +81,28 @@ export class AIStreamManager {
       throw new Error('Temporal client not initialized');
     }
 
-    // Check if there's already an active stream
-    if (this.isStreamActive(roomId)) {
-      logger.warn({ roomId }, 'AI stream already active for room');
-      return;
-    }
-
     const messageId = `ai-${userMessage.id}`;
     const workflowId = `ai-stream-${roomId}-${Date.now()}`;
 
-    const session: AIStreamSession = {
-      workflowId,
-      messageId,
-      roomId,
-      isActive: true,
-      startedAt: new Date(),
-    };
-
-    this.activeSessions.set(roomId, session);
-
     logger.info({ roomId, messageId, workflowId }, 'Starting AI stream workflow');
 
-    try {
-      // Start Temporal workflow
-      // The workflow will:
-      // 1. Stream AI response via activities (emits to Socket.IO in real-time)
-      // 2. Save the complete response to Redis
-      // 3. Provide durability - if server crashes, workflow resumes
-      const handle = await this.temporalClient.workflow.start('aiStreamingWorkflow', {
-        taskQueue: TEMPORAL_CONFIG.taskQueue,
-        workflowId,
-        args: [
-          {
-            userMessage,
-            conversationHistory,
-            roomId,
-            socketId,
-            workflowId,
-          },
-        ],
-      });
+    // Start Temporal workflow
+    // The workflow will:
+    // 1. Stream AI response via activities (emits to Socket.IO in real-time)
+    // 2. Save the complete response to Redis
+    // 3. Provide durability - if server crashes, workflow resumes
+    await this.temporalClient.workflow.start('aiStreamingWorkflow', {
+      taskQueue: TEMPORAL_CONFIG.taskQueue,
+      workflowId,
+      args: [{ userMessage, conversationHistory, roomId, socketId, workflowId }],
+    });
 
-      logger.info({ workflowId, roomId }, 'Temporal workflow started');
-
-      // Monitor workflow completion in background (non-blocking)
-      handle
-        .result()
-        .then((result) => {
-          if (result.success) {
-            logger.info({ workflowId, roomId, messageId: result.aiMessage?.id }, 'Workflow completed successfully');
-          } else {
-            logger.error({ workflowId, roomId, error: result.error }, 'Workflow completed with error');
-          }
-        })
-        .catch((error) => {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          logger.error({ error: errorMessage, workflowId, roomId }, 'Workflow execution failed');
-        })
-        .finally(() => {
-          // Mark session as inactive and cleanup
-          const existingSession = this.activeSessions.get(roomId);
-          if (existingSession && existingSession.workflowId === workflowId) {
-            existingSession.isActive = false;
-            // Clean up after delay
-            setTimeout(() => {
-              this.activeSessions.delete(roomId);
-              logger.debug({ roomId, workflowId }, 'Removed completed AI stream session');
-            }, 30000); // 30 seconds
-          }
-        });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error: errorMessage, roomId, workflowId }, 'Failed to start AI stream workflow');
-
-      // Clean up session
-      this.activeSessions.delete(roomId);
-      throw error;
-    }
+    logger.info({ workflowId, roomId }, 'Temporal workflow started successfully');
   }
 
   /**
    * Cancel an active stream by terminating the workflow
+   * Queries Temporal to find and terminate running workflows for this room
    */
   async cancelStream(roomId: string): Promise<boolean> {
     if (!this.temporalClient) {
@@ -168,33 +110,40 @@ export class AIStreamManager {
       return false;
     }
 
-    const session = this.activeSessions.get(roomId);
-    if (session && session.isActive) {
-      logger.info({ roomId, workflowId: session.workflowId }, 'Cancelling AI stream workflow');
+    try {
+      // Find running workflows for this room
+      const workflows = this.temporalClient.workflow.list({
+        query: `WorkflowId STARTS_WITH "ai-stream-${roomId}-" AND ExecutionStatus = "Running"`,
+      });
 
-      try {
-        const handle = this.temporalClient.workflow.getHandle(session.workflowId);
-        await handle.terminate('User cancelled stream');
-        session.isActive = false;
-        return true;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        logger.error({ error: errorMessage, workflowId: session.workflowId }, 'Failed to cancel workflow');
-        return false;
+      let cancelled = false;
+      for await (const workflow of workflows) {
+        logger.info({ roomId, workflowId: workflow.workflowId }, 'Cancelling AI stream workflow');
+
+        try {
+          const handle = this.temporalClient.workflow.getHandle(workflow.workflowId);
+          await handle.terminate('User cancelled stream');
+          cancelled = true;
+        } catch (error) {
+          const errorMessage = getErrorMessage(error);
+          logger.error({ error: errorMessage, workflowId: workflow.workflowId }, 'Failed to cancel workflow');
+        }
       }
+
+      return cancelled;
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      logger.error({ error: errorMessage, roomId }, 'Failed to query workflows for cancellation');
+      return false;
     }
-    return false;
   }
 
   /**
    * Cleanup on shutdown
+   * Note: Workflows continue running in Temporal even after shutdown
    */
   shutdown(): void {
-    // Mark all sessions as inactive
-    for (const [, session] of this.activeSessions.entries()) {
-      session.isActive = false;
-    }
-    this.activeSessions.clear();
     logger.info('AI Stream Manager shut down');
+    // No cleanup needed - Temporal manages workflow lifecycle
   }
 }

@@ -7,6 +7,7 @@ import {
 } from '@chat-app/shared';
 import { TypedServer, TypedSocket } from '../types';
 import { ServiceContainer } from '../services/ServiceContainer';
+import { broadcastUsersList } from '../utils/broadcastHelpers';
 
 const logger = createChildLogger({ module: 'join-handler' });
 
@@ -51,33 +52,9 @@ export function createJoinHandler(io: TypedServer, socket: TypedSocket, services
     };
     io.to(roomId).emit('user_joined', payload);
 
-    // Send current users list for this room
-    const usersList = services.userManager.getUsersList(roomId);
-    io.to(roomId).emit('users_list', usersList);
+    // Broadcast updated users list to room
+    broadcastUsersList(io, services, roomId);
 
-    // If there's an active AI stream, send the current state to the newly joined user
-    const activeSession = services.aiStreamManager.getSession(roomId);
-    if (activeSession && activeSession.isActive) {
-      logger.info(
-        { roomId, messageId: activeSession.messageId, username },
-        'Sending active AI stream state to newly joined user'
-      );
-
-      // Send start event to notify client of ongoing stream
-      // (Temporal workflow handles all streaming state internally)
-      socket.emit('ai_stream_start', {
-        messageId: activeSession.messageId,
-        roomId,
-        timestamp: activeSession.startedAt.toISOString(),
-      });
-
-      logger.debug(
-        { roomId, workflowId: activeSession.workflowId },
-        'Informed reconnected client of active AI stream'
-      );
-    }
-
-    // Acknowledge success
     callback?.({ success: true });
   };
 }

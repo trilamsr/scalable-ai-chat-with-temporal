@@ -6,6 +6,7 @@ import { Server } from 'socket.io';
 import { ServiceContainer } from '../services/ServiceContainer';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { getErrorMessage } from '../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'temporal-worker' });
 const __filename = fileURLToPath(import.meta.url);
@@ -62,7 +63,7 @@ export async function startTemporalWorker(
     logger.info('Temporal worker started successfully');
     return temporalWorker;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = getErrorMessage(error);
     logger.error({ error: errorMessage }, 'Failed to start Temporal worker');
     throw error;
   }

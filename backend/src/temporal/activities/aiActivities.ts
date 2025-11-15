@@ -11,6 +11,7 @@ import {
 } from '@chat-app/shared';
 import { ServiceContainer } from '../../services/ServiceContainer';
 import { Server } from 'socket.io';
+import { getErrorMessage } from '../../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'ai-activities' });
 
@@ -146,7 +147,7 @@ export async function streamAIResponse(params: StreamAIResponseParams): Promise<
 
     return accumulatedText;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = getErrorMessage(error);
     logger.error({ error: errorMessage, roomId, messageId }, 'AI streaming activity error');
 
     // Emit error to Socket.IO

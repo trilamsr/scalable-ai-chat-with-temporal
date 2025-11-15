@@ -3,7 +3,7 @@
  * Handles AI stream start, chunks, finish, and error events
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { TypedSocket } from '../types';
 import {
   ILogger,
@@ -46,6 +46,12 @@ export function useAIStream(
   });
 
   const [aiMessage, setAIMessage] = useState<Message | null>(null);
+
+  // Store options in a ref to avoid recreating callbacks when options change
+  const optionsRef = useRef(options);
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   // Handle AI stream start
   const handleAIStreamStart = useCallback(
@@ -129,12 +135,13 @@ export function useAIStream(
             timestamp: payload.timestamp,
           };
           // Call onFinish callback to add message to regular messages
-          options?.onFinish?.(finalMessage);
+          // Use ref to access latest options without adding to dependencies
+          optionsRef.current?.onFinish?.(finalMessage);
         }
         return null;
       });
     },
-    [roomId, logger, options]
+    [roomId, logger]
   );
 
   // Handle AI stream error

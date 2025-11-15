@@ -70,6 +70,19 @@ export class UserManager {
   }
 
   /**
+   * Get user context (username and roomId) for a given socket ID
+   * @param socketId - Socket ID to look up
+   * @returns Object containing username and roomId, or { username: 'Anonymous', roomId: undefined } if not found
+   */
+  getUserContext(socketId: string): { username: string; roomId: string | undefined } {
+    const userData = this.connectedUsers.get(socketId);
+    return {
+      username: userData?.username || 'Anonymous',
+      roomId: userData?.roomId,
+    };
+  }
+
+  /**
    * Get list of all connected users in a specific room
    * @param roomId - Room name to filter by (optional - returns all if not provided)
    * @returns Array of UserInfo objects

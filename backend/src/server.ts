@@ -9,6 +9,7 @@ import { redis, shutdownRedis, createRedisClient } from './redis';
 import { ServiceContainer } from './services/ServiceContainer';
 import { getTemporalClient, closeTemporalClient } from './temporal/client';
 import { startTemporalWorker, stopTemporalWorker } from './temporal/worker';
+import { getErrorMessage } from './utils/errorHelpers';
 
 const app = express();
 const server = http.createServer(app);
@@ -38,7 +39,7 @@ Promise.all([pubClient.connect(), subClient.connect()])
     logger.info('Redis adapter for Socket.IO initialized - horizontal scaling enabled');
   })
   .catch((error) => {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Failed to initialize Redis adapter');
+    logger.error({ error: getErrorMessage(error) }, 'Failed to initialize Redis adapter');
     process.exit(1);
   });
 
@@ -62,14 +63,14 @@ getTemporalClient()
       })
       .catch((error) => {
         logger.error(
-          { error: error instanceof Error ? error.message : 'Unknown error' },
+          { error: getErrorMessage(error) },
           'Failed to start Temporal worker - AI streaming will not work'
         );
       });
   })
   .catch((error) => {
     logger.error(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { error: getErrorMessage(error) },
       'Failed to initialize Temporal client - AI streaming will not work'
     );
   });
@@ -93,7 +94,7 @@ app.get('/health', async (_req: Request, res: Response) => {
       connectedUsers: userCount,
     });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Health check failed');
+    logger.error({ error: getErrorMessage(error) }, 'Health check failed');
     res.status(503).json({
       status: 'error',
       message: 'Service unavailable',
@@ -112,69 +113,114 @@ server.listen(PORT, () => {
 });
 
 /**
+ * Close Socket.IO connections
+ */
+async function closeSocketIO(): Promise<void> {
+  return new Promise((resolve) => {
+    io.close(() => {
+      logger.info('Socket.IO connections closed');
+      resolve();
+    });
+  });
+}
+
+/**
+ * Close HTTP server
+ */
+async function closeHTTPServer(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    server.close((err) => {
+      if (err) {
+        logger.error({ error: getErrorMessage(err) }, 'Error closing HTTP server');
+        reject(err);
+      } else {
+        logger.info('HTTP server closed');
+        resolve();
+      }
+    });
+  });
+}
+
+/**
+ * Stop Temporal services
+ */
+async function stopTemporalServices(): Promise<void> {
+  if (temporalWorkerStarted) {
+    try {
+      await stopTemporalWorker();
+      logger.info('Temporal worker stopped');
+    } catch (error) {
+      logger.error({ error: getErrorMessage(error) }, 'Error stopping Temporal worker');
+    }
+  }
+
+  try {
+    await closeTemporalClient();
+    logger.info('Temporal client closed');
+  } catch (error) {
+    logger.error({ error: getErrorMessage(error) }, 'Error closing Temporal client');
+  }
+}
+
+/**
+ * Close Redis connections
+ */
+async function closeRedisConnections(): Promise<void> {
+  try {
+    await Promise.all([pubClient.quit(), subClient.quit()]);
+    logger.info('Redis pub/sub clients closed');
+  } catch (error) {
+    logger.error({ error: getErrorMessage(error) }, 'Error closing Redis pub/sub clients');
+  }
+
+  try {
+    await shutdownRedis();
+  } catch (error) {
+    logger.error({ error: getErrorMessage(error) }, 'Error closing Redis');
+  }
+}
+
+/**
+ * Cleanup services
+ */
+async function cleanupServices(): Promise<void> {
+  try {
+    await services.cleanup();
+    logger.info('Service container cleaned up');
+  } catch (error) {
+    logger.error({ error: getErrorMessage(error) }, 'Error cleaning up services');
+  }
+}
+
+/**
  * Graceful shutdown handler
  * Coordinates shutdown of all services
  */
 async function gracefulShutdown(signal: string): Promise<void> {
   logger.info({ signal }, 'Shutdown signal received, starting graceful shutdown');
 
-  // Close Socket.IO connections
-  io.close(() => logger.info('Socket.IO connections closed'));
-
-  // Close HTTP server
-  server.close(async () => {
-    logger.info('HTTP server closed');
-
-    // Stop Temporal worker if running
-    if (temporalWorkerStarted) {
-      try {
-        await stopTemporalWorker();
-        logger.info('Temporal worker stopped');
-      } catch (error) {
-        logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error stopping Temporal worker');
-      }
-    }
-
-    // Close Temporal client
-    try {
-      await closeTemporalClient();
-      logger.info('Temporal client closed');
-    } catch (error) {
-      logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error closing Temporal client');
-    }
-
-    // Cleanup service container
-    try {
-      await services.cleanup();
-      logger.info('Service container cleaned up');
-    } catch (error) {
-      logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error cleaning up services');
-    }
-
-    // Close Redis pub/sub clients for Socket.IO adapter
-    try {
-      await Promise.all([pubClient.quit(), subClient.quit()]);
-      logger.info('Redis pub/sub clients closed');
-    } catch (error) {
-      logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error closing Redis pub/sub clients');
-    }
-
-    // Close main Redis connection
-    try {
-      await shutdownRedis();
-    } catch (error) {
-      logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error closing Redis');
-    }
-
-    logger.info('Graceful shutdown completed');
-    process.exit(0);
-  });
-
-  // Force shutdown after timeout
-  setTimeout(() => {
+  // Set timeout for forced shutdown
+  const forceShutdownTimeout = setTimeout(() => {
     logger.error('Forced shutdown after timeout');
     process.exit(1);
   }, SHUTDOWN_TIMEOUT_MS);
+
+  try {
+    // Close all connections in order
+    await closeSocketIO();
+    await closeHTTPServer();
+    await stopTemporalServices();
+    await cleanupServices();
+    await closeRedisConnections();
+
+    logger.info('Graceful shutdown completed');
+    clearTimeout(forceShutdownTimeout);
+    process.exit(0);
+  } catch (error) {
+    logger.error({ error: getErrorMessage(error) }, 'Error during graceful shutdown');
+    clearTimeout(forceShutdownTimeout);
+    process.exit(1);
+  }
 }
 
 // Register shutdown handlers

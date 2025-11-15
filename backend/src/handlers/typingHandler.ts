@@ -10,8 +10,7 @@ const logger = createChildLogger({ module: 'typing-handler' });
 export function createTypingHandler(_io: TypedServer, socket: TypedSocket, services: ServiceContainer) {
   return (isTyping: boolean): void => {
     if (services.userManager.isUserConnected(socket.id)) {
-      const username = services.userManager.getUsername(socket.id);
-      const roomId = services.userManager.getRoomId(socket.id);
+      const { username, roomId } = services.userManager.getUserContext(socket.id);
 
       if (!roomId) return;
 

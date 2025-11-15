@@ -1,5 +1,6 @@
 import { Connection, Client } from '@temporalio/client';
 import { createChildLogger } from '@chat-app/shared';
+import { getErrorMessage } from '../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'temporal-client' });
 
@@ -58,7 +59,7 @@ export async function getTemporalClient(): Promise<Client> {
       return temporalClient;
     } catch (error) {
       lastError = error;
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = getErrorMessage(error);
 
       if (attempt < TEMPORAL_CONFIG.maxRetries) {
         logger.warn(

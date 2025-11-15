@@ -12,6 +12,7 @@ import {
   AIStreamResult,
   createChildLogger,
 } from '@chat-app/shared';
+import { getErrorMessage } from '../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'AIService' });
 
@@ -107,7 +108,7 @@ export class AIService implements IAIStreamService {
         'AI stream completed'
       );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = getErrorMessage(error);
       logger.error({ error: errorMessage }, 'AI stream error');
 
       yield {

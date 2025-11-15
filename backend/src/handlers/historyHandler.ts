@@ -10,8 +10,7 @@ const logger = createChildLogger({ module: 'history-handler' });
  */
 export function createGetHistoryHandler(_io: TypedServer, socket: TypedSocket, services: ServiceContainer) {
   return async (count?: number): Promise<void> => {
-    const username = services.userManager.getUsername(socket.id);
-    const roomId = services.userManager.getRoomId(socket.id);
+    const { username, roomId } = services.userManager.getUserContext(socket.id);
 
     if (!roomId) {
       logger.warn({ socketId: socket.id }, 'History request from user not in a room');

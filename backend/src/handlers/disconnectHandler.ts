@@ -1,6 +1,7 @@
 import { createChildLogger, UserLeftPayload } from '@chat-app/shared';
 import { TypedServer, TypedSocket } from '../types';
 import { ServiceContainer } from '../services/ServiceContainer';
+import { broadcastUsersList } from '../utils/broadcastHelpers';
 
 const logger = createChildLogger({ module: 'disconnect-handler' });
 
@@ -23,9 +24,8 @@ export function createDisconnectHandler(io: TypedServer, socket: TypedSocket, se
       };
       io.to(roomId).emit('user_left', payload);
 
-      // Send updated users list for this room
-      const usersList = services.userManager.getUsersList(roomId);
-      io.to(roomId).emit('users_list', usersList);
+      // Broadcast updated users list to room
+      broadcastUsersList(io, services, roomId);
     } else {
       logger.info({ socketId: socket.id }, 'User disconnected (no room data)');
     }
