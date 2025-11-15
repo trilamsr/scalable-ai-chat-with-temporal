@@ -27,6 +27,9 @@ export const AI_USER = {
   USER_ID: 'ai',                     // [B] AIStreamManager.ts [F] useAIStream.ts - user ID for AI messages
 } as const;
 
+// AI System Prompt [B]
+export const AI_SYSTEM_PROMPT = 'You are a helpful assistant in a chat room. Be concise and friendly.'; // [B] AIStreamManager.ts - system prompt for AI
+
 // Redis configuration [B]
 export const REDIS_KEYS = {
   CHAT_MESSAGES: 'chat:messages',    // [B] chatHistory.ts - Redis stream key prefix for chat messages

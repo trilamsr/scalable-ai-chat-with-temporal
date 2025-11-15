@@ -2,7 +2,7 @@ import { redis } from './redis';
 import { Message, createChildLogger, REDIS_KEYS, CHAT_CONFIG } from '@chat-app/shared';
 import { handleRedisError } from './utils/errorHelpers';
 
-const historyLogger = createChildLogger({ module: 'chat-history' });
+const logger = createChildLogger({ module: 'chat-history' });
 
 /**
  * Chat history service using Redis Streams
@@ -24,7 +24,7 @@ export class ChatHistoryService {
    */
   async addMessage(message: Message): Promise<string | null> {
     const roomId = message.roomId;
-    const streamKey = this.getRoomKey(roomId);
+    const streamKey = this.getRoomKey(message.roomId);
 
     try {
       // XADD chat:messages:room * field1 value1 field2 value2 ...
@@ -44,14 +44,14 @@ export class ChatHistoryService {
 
       const streamId = await redis.xadd(streamKey, '*', ...fields);
 
-      historyLogger.debug(
+      logger.debug(
         { messageId: message.id, streamId, roomId },
         'Message added to history stream'
       );
 
       return streamId;
     } catch (error) {
-      handleRedisError(historyLogger, error, { messageId: message.id, roomId }, 'Failed to add message to history');
+      handleRedisError(logger, error, { messageId: message.id, roomId }, 'Failed to add message to history');
       return null;
     }
   }
@@ -70,8 +70,9 @@ export class ChatHistoryService {
       // We use XREVRANGE to get the most recent messages efficiently
       const results = await redis.xrevrange(streamKey, '+', '-', 'COUNT', count);
 
+      // Early return if no results
       if (!results || results.length === 0) {
-        historyLogger.debug({ roomId }, 'No messages found in history');
+        logger.debug({ roomId }, 'No messages found in history');
         return [];
       }
 
@@ -98,28 +99,28 @@ export class ChatHistoryService {
         })
         .reverse(); // Reverse to get chronological order (oldest first)
 
-      historyLogger.debug({ count: messages.length, roomId }, 'Retrieved messages from history');
+      logger.debug({ count: messages.length, roomId }, 'Retrieved messages from history');
 
       return messages;
     } catch (error) {
-      handleRedisError(historyLogger, error, { roomId }, 'Failed to retrieve message history');
+      handleRedisError(logger, error, { roomId }, 'Failed to retrieve message history');
       return [];
     }
   }
 
   /**
    * Get the total number of messages in the stream
-   * @param roomId - Room name (optional, default room if not provided)
+   * @param roomId - Room name
    * @returns Total message count
    */
-  async getMessageCount(roomId: string = 'default'): Promise<number> {
+  async getMessageCount(roomId: string): Promise<number> {
     const streamKey = this.getRoomKey(roomId);
 
     try {
       const length = await redis.xlen(streamKey);
       return length;
     } catch (error) {
-      handleRedisError(historyLogger, error, { roomId }, 'Failed to get message count', false);
+      handleRedisError(logger, error, { roomId }, 'Failed to get message count', false);
       return 0;
     }
   }
@@ -136,9 +137,9 @@ export class ChatHistoryService {
     try {
       // XTRIM with MAXLEN keeps approximately the specified number of entries
       await redis.xtrim(streamKey, 'MAXLEN', '~', maxLength);
-      historyLogger.info({ roomId, maxLength }, 'Chat history trimmed');
+      logger.info({ roomId, maxLength }, 'Chat history trimmed');
     } catch (error) {
-      handleRedisError(historyLogger, error, { roomId }, 'Failed to trim chat history', false);
+      handleRedisError(logger, error, { roomId }, 'Failed to trim chat history', false);
     }
   }
 
@@ -152,10 +153,10 @@ export class ChatHistoryService {
       if (roomId) {
         const streamKey = this.getRoomKey(roomId);
         await redis.del(streamKey);
-        historyLogger.warn({ roomId }, 'Room chat history cleared');
+        logger.warn({ roomId }, 'Room chat history cleared');
       }
     } catch (error) {
-      handleRedisError(historyLogger, error, { roomId }, 'Failed to clear chat history');
+      handleRedisError(logger, error, { roomId }, 'Failed to clear chat history');
     }
   }
 }

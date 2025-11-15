@@ -17,6 +17,7 @@ import {
   Message,
   AI_USER,
   AI_STREAM_TIMEOUTS,
+  AI_SYSTEM_PROMPT,
 } from '@chat-app/shared';
 import { AIService } from './AIService.js';
 import { ChatHistoryService } from '../chatHistory.js';
@@ -131,7 +132,7 @@ export class AIStreamManager {
 
       // Start streaming
       for await (const event of this.aiService.streamText({
-        system: 'You are a helpful assistant in a chat room. Be concise and friendly.',
+        system: AI_SYSTEM_PROMPT,
         messages,
         temperature: 0.7,
         maxTokens: 1000,

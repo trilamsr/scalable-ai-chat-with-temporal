@@ -1,7 +1,7 @@
 import Redis from 'ioredis';
 import { createChildLogger, REDIS_RETRY } from '@chat-app/shared';
 
-const redisLogger = createChildLogger({ module: 'redis' });
+const logger = createChildLogger({ module: 'redis' });
 
 /**
  * Default Redis configuration
@@ -13,12 +13,7 @@ const DEFAULT_REDIS_CONFIG = {
     return delay;
   },
   reconnectOnError(err: Error) {
-    const targetError = 'READONLY';
-    if (err.message.includes(targetError)) {
-      // Only reconnect when the error contains "READONLY"
-      return true;
-    }
-    return false;
+    return err.message.includes('READONLY');
   },
 };
 
@@ -35,11 +30,11 @@ export function createRedisClient(lazyConnect: boolean = false): Redis {
 
   const client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', config);
 
-  client.on('connect', () => redisLogger.debug('Redis client connecting'));
-  client.on('ready', () => redisLogger.debug('Redis client ready'));
-  client.on('error', (err) => redisLogger.error({ error: err.message }, 'Redis client error'));
-  client.on('close', () => redisLogger.warn('Redis client connection closed'));
-  client.on('reconnecting', () => redisLogger.info('Redis client reconnecting'));
+  client.on('connect', () => logger.debug('Redis client connecting'));
+  client.on('ready', () => logger.debug('Redis client ready'));
+  client.on('error', (err) => logger.error({ error: err.message }, 'Redis client error'));
+  client.on('close', () => logger.warn('Redis client connection closed'));
+  client.on('reconnecting', () => logger.info('Redis client reconnecting'));
 
   return client;
 }
@@ -54,7 +49,7 @@ export const redis = createRedisClient();
  * Exported to be called by main server shutdown coordinator
  */
 export async function shutdownRedis(): Promise<void> {
-  redisLogger.info('Shutting down Redis client');
+  logger.info('Shutting down Redis client');
   await redis.quit();
-  redisLogger.info('Redis client closed');
+  logger.info('Redis client closed');
 }

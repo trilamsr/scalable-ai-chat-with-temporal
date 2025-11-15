@@ -5,7 +5,7 @@ import { AIService } from './AIService.js';
 import { AIStreamManager } from './AIStreamManager.js';
 import { createChildLogger } from '@chat-app/shared';
 
-const containerLogger = createChildLogger({ module: 'service-container' });
+const logger = createChildLogger({ module: 'service-container' });
 
 /**
  * Service container for dependency injection
@@ -28,7 +28,7 @@ export class ServiceContainer {
   public readonly aiStreamManager: AIStreamManager;
 
   private constructor() {
-    containerLogger.info('Initializing service container');
+    logger.info('Initializing service container');
 
     // Initialize services in dependency order
     this.userManager = new UserManager();
@@ -39,7 +39,7 @@ export class ServiceContainer {
     // Initialize services that depend on others
     this.messageService = new MessageService(this.chatHistory, this.userManager);
 
-    containerLogger.info('Service container initialized');
+    logger.info('Service container initialized');
   }
 
   /**
@@ -59,7 +59,7 @@ export class ServiceContainer {
    * Clears the singleton instance, forcing a new one on next getInstance()
    */
   public static reset(): void {
-    containerLogger.info('Resetting service container');
+    logger.info('Resetting service container');
     ServiceContainer.instance = null;
   }
 
@@ -67,7 +67,7 @@ export class ServiceContainer {
    * Perform cleanup on all services
    */
   public async cleanup(): Promise<void> {
-    containerLogger.info('Cleaning up service container');
+    logger.info('Cleaning up service container');
     this.aiStreamManager.shutdown();
     // Add any cleanup logic for services here
     // e.g., closing connections, flushing buffers, etc.

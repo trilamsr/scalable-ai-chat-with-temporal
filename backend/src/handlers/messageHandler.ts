@@ -51,22 +51,17 @@ export function createMessageHandler(io: TypedServer, socket: TypedSocket, servi
     if (!services.aiStreamManager.isStreamActive(message.roomId)) {
       logger.info({ roomId: message.roomId }, 'Triggering AI response');
 
-      // Get recent chat history for context
-      try {
-        const recentMessages = await services.chatHistory.getRecentMessages(message.roomId, 5);
-        const conversationHistory = recentMessages.filter((msg) => !msg.isSystem);
-
-        // Start AI streaming (non-blocking)
-        services.aiStreamManager
-          .startStream(io, message.roomId, message.text, conversationHistory)
-          .catch((error) => {
-            const errorMsg = getErrorMessage(error);
-            logger.error({ error: errorMsg, roomId: message.roomId }, 'AI stream failed');
-          });
-      } catch (error) {
-        const errorMsg = getErrorMessage(error);
-        logger.error({ error: errorMsg, roomId: message.roomId }, 'Failed to get chat history for AI');
-      }
+      // Get recent chat history for context and start AI streaming (non-blocking)
+      services.chatHistory
+        .getRecentMessages(message.roomId, 5)
+        .then((recentMessages) => {
+          const conversationHistory = recentMessages.filter((msg) => !msg.isSystem);
+          return services.aiStreamManager.startStream(io, message.roomId, message.text, conversationHistory);
+        })
+        .catch((error) => {
+          const errorMsg = getErrorMessage(error);
+          logger.error({ error: errorMsg, roomId: message.roomId }, 'Failed to start AI response');
+        });
     }
   };
 }

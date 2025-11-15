@@ -10,7 +10,7 @@ import { ChatHistoryService } from '../chatHistory';
 import { UserManager } from '../UserManager';
 import { getErrorMessage } from '../utils/errorHelpers';
 
-const serviceLogger = createChildLogger({ module: 'message-service' });
+const logger = createChildLogger({ module: 'message-service' });
 
 /**
  * Service layer for message-related business logic
@@ -35,7 +35,7 @@ export class MessageService {
     // Validate input data
     const validation = validateData(messageDataSchema, data);
     if (!validation.success) {
-      serviceLogger.warn({ socketId, error: validation.error }, 'Invalid message data');
+      logger.warn({ socketId, error: validation.error }, 'Invalid message data');
       return {
         success: false,
         error: validation.error,
@@ -51,7 +51,7 @@ export class MessageService {
 
     // Verify user is in a room
     if (!roomId) {
-      serviceLogger.warn({ socketId }, 'Message from user not in a room');
+      logger.warn({ socketId }, 'Message from user not in a room');
       return {
         success: false,
         error: 'You must join a room before sending messages',
@@ -61,7 +61,7 @@ export class MessageService {
 
     // Verify roomId matches user's current room
     if (validatedData.roomId !== roomId) {
-      serviceLogger.warn(
+      logger.warn(
         { socketId, requestedRoom: validatedData.roomId, userRoom: roomId },
         'Room ID mismatch'
       );
@@ -83,12 +83,24 @@ export class MessageService {
       role: 'user', // Mark as user message for AI conversation context
     };
 
-    serviceLogger.info(
+    logger.info(
       { messageId: message.id, username, socketId, roomId, textLength: validatedData.text.length },
       'Message created'
     );
 
     return { success: true, message };
+  }
+
+  /**
+   * Create persistence error response
+   * @private
+   */
+  private createPersistenceError(): MessageAck {
+    return {
+      success: false,
+      error: 'Failed to save message to history',
+      code: 'PERSISTENCE_ERROR',
+    };
   }
 
   /**
@@ -101,15 +113,11 @@ export class MessageService {
       const streamId = await this.chatHistory.addMessage(message);
 
       if (streamId === null) {
-        serviceLogger.error({ messageId: message.id }, 'Failed to persist message (null streamId)');
-        return {
-          success: false,
-          error: 'Failed to save message to history',
-          code: 'PERSISTENCE_ERROR',
-        };
+        logger.error({ messageId: message.id }, 'Failed to persist message (null streamId)');
+        return this.createPersistenceError();
       }
 
-      serviceLogger.debug(
+      logger.debug(
         { messageId: message.id, streamId, roomId: message.roomId },
         'Message persisted successfully'
       );
@@ -120,15 +128,11 @@ export class MessageService {
         timestamp: message.timestamp,
       };
     } catch (error) {
-      serviceLogger.error(
+      logger.error(
         { error: getErrorMessage(error), messageId: message.id },
         'Exception while persisting message'
       );
-      return {
-        success: false,
-        error: 'Failed to save message to history',
-        code: 'PERSISTENCE_ERROR',
-      };
+      return this.createPersistenceError();
     }
   }
 

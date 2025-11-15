@@ -1,6 +1,6 @@
 import { UserInfo, createChildLogger } from '@chat-app/shared';
 
-const userLogger = createChildLogger({ module: 'user-manager' });
+const logger = createChildLogger({ module: 'user-manager' });
 
 interface UserData {
   username: string;
@@ -26,7 +26,7 @@ export class UserManager {
    */
   addUser(socketId: string, username: string, roomId: string): void {
     this.connectedUsers.set(socketId, { username, roomId });
-    userLogger.info(
+    logger.info(
       { username, socketId, roomId, totalUsers: this.connectedUsers.size },
       'User added to room'
     );
@@ -42,7 +42,7 @@ export class UserManager {
     this.connectedUsers.delete(socketId);
 
     if (userData) {
-      userLogger.info(
+      logger.info(
         { username: userData.username, socketId, roomId: userData.roomId, totalUsers: this.connectedUsers.size },
         'User removed from room'
       );
@@ -70,15 +70,6 @@ export class UserManager {
   }
 
   /**
-   * Get user data for a given socket ID
-   * @param socketId - Socket ID to look up
-   * @returns UserData or undefined if not found
-   */
-  getUserData(socketId: string): UserData | undefined {
-    return this.connectedUsers.get(socketId);
-  }
-
-  /**
    * Get list of all connected users in a specific room
    * @param roomId - Room name to filter by (optional - returns all if not provided)
    * @returns Array of UserInfo objects
@@ -102,7 +93,13 @@ export class UserManager {
     if (!roomId) {
       return this.connectedUsers.size;
     }
-    return Array.from(this.connectedUsers.values()).filter(userData => userData.roomId === roomId).length;
+
+    // Use direct iteration for better performance
+    let count = 0;
+    for (const userData of this.connectedUsers.values()) {
+      if (userData.roomId === roomId) count++;
+    }
+    return count;
   }
 
   /**
