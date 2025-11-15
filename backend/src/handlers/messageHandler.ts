@@ -49,18 +49,24 @@ export function createMessageHandler(io: TypedServer, socket: TypedSocket, servi
 
     // Trigger AI response if no stream is currently active
     if (!services.aiStreamManager.isStreamActive(message.roomId)) {
-      logger.info({ roomId: message.roomId }, 'Triggering AI response');
+      logger.info({ roomId: message.roomId }, 'Triggering AI response (Temporal workflow)');
 
-      // Get recent chat history for context and start AI streaming (non-blocking)
+      // Get recent chat history for context and start AI streaming workflow (non-blocking)
       services.chatHistory
         .getRecentMessages(message.roomId, 5)
         .then((recentMessages) => {
           const conversationHistory = recentMessages.filter((msg) => !msg.isSystem);
-          return services.aiStreamManager.startStream(io, message.roomId, message.text, conversationHistory);
+          return services.aiStreamManager.startStream(
+            io,
+            message.roomId,
+            message, // Pass the full message object
+            conversationHistory,
+            socket.id
+          );
         })
         .catch((error) => {
           const errorMsg = getErrorMessage(error);
-          logger.error({ error: errorMsg, roomId: message.roomId }, 'Failed to start AI response');
+          logger.error({ error: errorMsg, roomId: message.roomId }, 'Failed to start AI response workflow');
         });
     }
   };

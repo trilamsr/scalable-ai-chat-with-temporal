@@ -7,6 +7,8 @@ import { initializeSocket, getConnectedUsersCount } from './socket';
 import { logger, ServerToClientEvents, ClientToServerEvents, SHUTDOWN_TIMEOUT_MS, SERVER_DEFAULTS } from '@chat-app/shared';
 import { redis, shutdownRedis, createRedisClient } from './redis';
 import { ServiceContainer } from './services/ServiceContainer';
+import { getTemporalClient, closeTemporalClient } from './temporal/client';
+import { startTemporalWorker, stopTemporalWorker } from './temporal/worker';
 
 const app = express();
 const server = http.createServer(app);
@@ -38,6 +40,38 @@ Promise.all([pubClient.connect(), subClient.connect()])
   .catch((error) => {
     logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Failed to initialize Redis adapter');
     process.exit(1);
+  });
+
+// Initialize Temporal client and worker
+let temporalWorkerStarted = false;
+
+getTemporalClient()
+  .then(async (client) => {
+    logger.info('Temporal client initialized');
+
+    // Register Temporal client with services
+    services.setTemporalClient(client);
+    services.aiStreamManager.setTemporalClient(client);
+
+    // Start Temporal worker in background (non-blocking)
+    // Worker runs workflows and activities
+    startTemporalWorker(io, services)
+      .then(() => {
+        temporalWorkerStarted = true;
+        logger.info('Temporal worker started - AI streaming now using durable workflows');
+      })
+      .catch((error) => {
+        logger.error(
+          { error: error instanceof Error ? error.message : 'Unknown error' },
+          'Failed to start Temporal worker - AI streaming will not work'
+        );
+      });
+  })
+  .catch((error) => {
+    logger.error(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      'Failed to initialize Temporal client - AI streaming will not work'
+    );
   });
 
 app.use(cors());
@@ -90,6 +124,24 @@ async function gracefulShutdown(signal: string): Promise<void> {
   // Close HTTP server
   server.close(async () => {
     logger.info('HTTP server closed');
+
+    // Stop Temporal worker if running
+    if (temporalWorkerStarted) {
+      try {
+        await stopTemporalWorker();
+        logger.info('Temporal worker stopped');
+      } catch (error) {
+        logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error stopping Temporal worker');
+      }
+    }
+
+    // Close Temporal client
+    try {
+      await closeTemporalClient();
+      logger.info('Temporal client closed');
+    } catch (error) {
+      logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error closing Temporal client');
+    }
 
     // Cleanup service container
     try {

@@ -63,22 +63,18 @@ export function createJoinHandler(io: TypedServer, socket: TypedSocket, services
         'Sending active AI stream state to newly joined user'
       );
 
-      // Send start event
+      // Send start event to notify client of ongoing stream
+      // (Temporal workflow handles all streaming state internally)
       socket.emit('ai_stream_start', {
         messageId: activeSession.messageId,
         roomId,
         timestamp: activeSession.startedAt.toISOString(),
       });
 
-      // Send current accumulated text as a single chunk
-      if (activeSession.accumulatedText) {
-        socket.emit('ai_stream_chunk', {
-          messageId: activeSession.messageId,
-          roomId,
-          chunk: activeSession.accumulatedText,
-          accumulatedText: activeSession.accumulatedText,
-        });
-      }
+      logger.debug(
+        { roomId, workflowId: activeSession.workflowId },
+        'Informed reconnected client of active AI stream'
+      );
     }
 
     // Acknowledge success

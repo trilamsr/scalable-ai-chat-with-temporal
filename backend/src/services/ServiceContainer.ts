@@ -4,6 +4,7 @@ import { MessageService } from './MessageService.js';
 import { AIService } from './AIService.js';
 import { AIStreamManager } from './AIStreamManager.js';
 import { createChildLogger } from '@chat-app/shared';
+import { Client } from '@temporalio/client';
 
 const logger = createChildLogger({ module: 'service-container' });
 
@@ -26,6 +27,7 @@ export class ServiceContainer {
   public readonly messageService: MessageService;
   public readonly aiService: AIService;
   public readonly aiStreamManager: AIStreamManager;
+  public temporalClient: Client | null = null;
 
   private constructor() {
     logger.info('Initializing service container');
@@ -34,7 +36,7 @@ export class ServiceContainer {
     this.userManager = new UserManager();
     this.chatHistory = new ChatHistoryService();
     this.aiService = new AIService();
-    this.aiStreamManager = new AIStreamManager(this.aiService, this.chatHistory);
+    this.aiStreamManager = new AIStreamManager(); // Temporal mode - no dependencies needed
 
     // Initialize services that depend on others
     this.messageService = new MessageService(this.chatHistory, this.userManager);
@@ -52,6 +54,15 @@ export class ServiceContainer {
       ServiceContainer.instance = new ServiceContainer();
     }
     return ServiceContainer.instance;
+  }
+
+  /**
+   * Set Temporal client (called after initialization)
+   * @param client - Temporal client instance
+   */
+  public setTemporalClient(client: Client): void {
+    this.temporalClient = client;
+    logger.info('Temporal client registered with service container');
   }
 
   /**
