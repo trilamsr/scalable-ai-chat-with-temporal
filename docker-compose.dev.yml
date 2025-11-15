@@ -41,7 +41,6 @@ services:
     container_name: chat-temporal-dev
     ports:
       - "7233:7233"  # gRPC port
-      - "8233:8233"  # Web UI port
     environment:
       - DB=postgres12
       - POSTGRES_SEEDS=postgres
@@ -62,6 +61,21 @@ services:
       timeout: 10s
       retries: 5
       start_period: 40s
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    container_name: chat-temporal-ui-dev
+    ports:
+      - "8233:8080"  # Web UI port
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    depends_on:
+      temporal:
+        condition: service_healthy
+    networks:
+      - chat-network
+    restart: unless-stopped
 
   backend:
     build:
