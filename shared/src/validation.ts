@@ -51,7 +51,7 @@ export function validateData<T>(
     return { success: true, data: result.data };
   }
 
-  
   const errorMessages = result.error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
   return { success: false, error: errorMessages };
 }
+

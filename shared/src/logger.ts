@@ -1,5 +1,3 @@
-
-
 import pino from 'pino';
 import { getLogLevel, isDevelopmentEnv, baseLoggerOptions } from './logger.config';
 
@@ -13,11 +11,11 @@ const getEnvVar = (key: string): string | undefined => {
     return process.env[key];
   }
   if (isBrowser) {
-    
+
     if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
       return (import.meta as any).env[key];
     }
-    
+
     if (typeof process !== 'undefined' && (process as any).env) {
       return (process as any).env[key];
     }
@@ -33,7 +31,7 @@ const logLevel = getLogLevel(logLevelEnv, isDevelopment);
 
 const createLogger = () => {
   if (isNode) {
-    
+
     return pino({
       level: logLevel,
       ...baseLoggerOptions,
@@ -54,7 +52,7 @@ const createLogger = () => {
       },
     });
   } else if (isBrowser) {
-    
+
     return pino({
       level: logLevel,
       ...baseLoggerOptions,
@@ -63,7 +61,7 @@ const createLogger = () => {
       },
     });
   } else {
-    
+
     return pino({
       level: 'info',
     });
@@ -77,3 +75,4 @@ export default logger;
 export const createChildLogger = (context: Record<string, unknown>) => {
   return logger.child(context);
 };
+

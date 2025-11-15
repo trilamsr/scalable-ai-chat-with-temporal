@@ -23,7 +23,7 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
     methods: ['GET', 'POST'],
     credentials: true,
   },
-  
+
   pingTimeout: SOCKET_CONFIG.PING_TIMEOUT,
   pingInterval: SOCKET_CONFIG.PING_INTERVAL,
   connectTimeout: SOCKET_CONFIG.CONNECT_TIMEOUT,
@@ -49,11 +49,9 @@ async function initializeTemporalServices(): Promise<void> {
     const client = await getTemporalClient();
     logger.info('Temporal client initialized');
 
-    
     services.setTemporalClient(client);
     services.aiStreamManager.setTemporalClient(client);
 
-    
     try {
       await startTemporalWorker(io, services);
       temporalWorkerStarted = true;
@@ -179,14 +177,13 @@ async function cleanupServices(): Promise<void> {
 async function gracefulShutdown(signal: string): Promise<void> {
   logger.info({ signal }, 'Shutdown signal received, starting graceful shutdown');
 
-  
   const forceShutdownTimeout = setTimeout(() => {
     logger.error('Forced shutdown after timeout');
     process.exit(1);
   }, SHUTDOWN_TIMEOUT_MS);
 
   try {
-    
+
     await closeSocketIO();
     await closeHTTPServer();
     await stopTemporalServices();
@@ -205,3 +202,4 @@ async function gracefulShutdown(signal: string): Promise<void> {
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+

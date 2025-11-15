@@ -27,7 +27,7 @@ export function createGetHistoryHandler(_io: TypedServer, socket: TypedSocket, s
         { error: getErrorMessage(error), socketId: socket.id },
         'Failed to retrieve chat history'
       );
-      
+
       socket.emit('chat_history', []);
     }
   };
@@ -44,18 +44,14 @@ export function createClearHistoryHandler(io: TypedServer, socket: TypedSocket, 
 
     try {
       await services.chatHistory.clearHistory(roomId);
-
-      
       io.to(roomId).emit('chat_history', []);
-
       callback?.({ success: true });
-
       logger.info({ username, socketId: socket.id, roomId }, 'Chat history cleared successfully');
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       logger.error({ error: errorMessage, roomId }, 'Failed to clear chat history');
-
       callback?.({ success: false, error: 'Failed to clear history' });
     }
   };
 }
+

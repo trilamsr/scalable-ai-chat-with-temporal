@@ -1,5 +1,3 @@
-
-
 export type AIMessageRole = 'system' | 'user' | 'assistant' | 'tool';
 
 export interface AIMessage {
@@ -101,9 +99,9 @@ export interface AIStreamResult {
 }
 
 export interface IAIStreamService {
-  
+
   streamText(options: AIStreamOptions): AsyncIterable<AIStreamEvent>;
 
-  
   streamTextComplete(options: AIStreamOptions): Promise<AIStreamResult>;
 }
+

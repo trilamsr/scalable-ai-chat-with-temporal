@@ -34,7 +34,6 @@ export const initializeSocket = (io: TypedServer, services: ServiceContainer): v
   io.on('connection', (socket: TypedSocket) => {
     socketLogger.info({ socketId: socket.id }, 'New client connected');
 
-    
     const onJoin = createJoinHandler(io, socket, services);
     const onSendMessage = createMessageHandler(io, socket, services);
     const onTyping = createTypingHandler(io, socket, services);
@@ -42,7 +41,6 @@ export const initializeSocket = (io: TypedServer, services: ServiceContainer): v
     const onClearHistory = createClearHistoryHandler(io, socket, services);
     const onDisconnect = createDisconnectHandler(io, socket, services);
 
-    
     socket.on('join', onJoin);
     socket.on('send_message', withRateLimit('send_message', onSendMessage, socket));
     socket.on('typing', withRateLimit('typing', onTyping, socket));
@@ -50,7 +48,6 @@ export const initializeSocket = (io: TypedServer, services: ServiceContainer): v
     socket.on('clear_history', onClearHistory);
     socket.on('disconnect', onDisconnect);
 
-    
     socket.on('disconnect', () => {
       rateLimiter.reset(socket.id);
       onDisconnect();
@@ -61,3 +58,4 @@ export const initializeSocket = (io: TypedServer, services: ServiceContainer): v
 export const getConnectedUsersCount = (services: ServiceContainer): number => {
   return services.userManager.getUserCount();
 };
+

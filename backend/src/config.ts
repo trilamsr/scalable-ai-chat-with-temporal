@@ -1,37 +1,31 @@
-
-
 import { SERVER_DEFAULTS, SOCKET_CONFIG, AI_CONFIG, REDIS_RETRY } from '@chat-app/shared';
 
 export interface AppConfig {
-  
+
   server: {
     port: number;
     corsOrigin: string;
     env: string;
   };
 
-  
   socket: {
     pingTimeout: number;
     pingInterval: number;
     connectTimeout: number;
   };
 
-  
   redis: {
     url: string;
     retryInitialDelay: number;
     retryMaxDelay: number;
   };
 
-  
   temporal: {
     address: string;
     namespace: string;
     taskQueue: string;
   };
 
-  
   ai: {
     apiKey: string;
     defaultModel: string;
@@ -41,7 +35,6 @@ export interface AppConfig {
     maxConcurrentWorkflows: number;
   };
 
-  
   frontendUrl: string;
 }
 
@@ -83,7 +76,6 @@ function loadConfig(): AppConfig {
     frontendUrl: process.env.FRONTEND_URL || SERVER_DEFAULTS.CORS_ORIGIN,
   };
 
-  
   if (!config.ai.apiKey && config.server.env === 'production') {
     throw new Error('OPENAI_API_KEY is required in production');
   }
@@ -108,3 +100,4 @@ export function isProduction(): boolean {
 export function isTest(): boolean {
   return config.server.env === 'test';
 }
+

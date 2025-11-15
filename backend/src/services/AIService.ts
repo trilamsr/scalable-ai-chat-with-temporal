@@ -1,5 +1,3 @@
-
-
 import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import {
@@ -27,7 +25,6 @@ export class AIService implements IAIStreamService {
     }
   }
 
-  
   async *streamText(options: AIStreamOptions): AsyncIterable<AIStreamEvent> {
     if (!this.apiKey) {
       yield {
@@ -39,16 +36,7 @@ export class AIService implements IAIStreamService {
 
     try {
       const model = openai(options.model || this.defaultModel);
-
-      logger.info(
-        {
-          model: options.model || this.defaultModel,
-          hasMessages: !!options.messages,
-          hasPrompt: !!options.prompt,
-          hasTools: !!options.tools,
-        },
-        'Starting AI stream'
-      );
+      logger.info({ model: options.model || this.defaultModel, hasMessages: !!options.messages, hasPrompt: !!options.prompt, hasTools: !!options.tools }, 'Starting AI stream');
 
       const stream = await streamText({
         model,
@@ -66,7 +54,6 @@ export class AIService implements IAIStreamService {
         maxRetries: options.maxRetries ?? 2,
       });
 
-      
       for await (const chunk of stream.textStream) {
         const event: AIStreamEvent = {
           type: 'text-delta',
@@ -77,7 +64,6 @@ export class AIService implements IAIStreamService {
         options.onTextDelta?.(chunk);
       }
 
-      
       const result = await stream;
       const usage = await result.usage;
 
@@ -113,7 +99,6 @@ export class AIService implements IAIStreamService {
     }
   }
 
-  
   async streamTextComplete(options: AIStreamOptions): Promise<AIStreamResult> {
     let fullText = '';
     let finalEvent: AIStreamEvent | null = null;
@@ -141,3 +126,4 @@ export class AIService implements IAIStreamService {
     };
   }
 }
+

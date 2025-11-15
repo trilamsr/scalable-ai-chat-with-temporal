@@ -25,15 +25,12 @@ export async function startTemporalWorker(
   try {
     logger.info({ address: TEMPORAL_CONFIG.address }, 'Starting Temporal worker');
 
-    
     activities.initializeActivities(io, services);
 
-    
     const connection = await NativeConnection.connect({
       address: TEMPORAL_CONFIG.address,
     });
 
-    
     temporalWorker = await Worker.create({
       connection,
       namespace: TEMPORAL_CONFIG.namespace,
@@ -44,7 +41,6 @@ export async function startTemporalWorker(
       maxConcurrentWorkflowTaskExecutions: AI_CONFIG.MAX_CONCURRENT_WORKFLOWS,
     });
 
-    
     await temporalWorker.run();
 
     logger.info('Temporal worker started successfully');
@@ -64,3 +60,4 @@ export async function stopTemporalWorker(): Promise<void> {
     logger.info('Temporal worker stopped');
   }
 }
+

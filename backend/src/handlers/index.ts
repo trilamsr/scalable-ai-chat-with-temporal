@@ -1,5 +1,3 @@
-
-
 export { createJoinHandler } from './joinHandler';
 export { createMessageHandler } from './messageHandler';
 export { createTypingHandler } from './typingHandler';

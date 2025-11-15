@@ -1,5 +1,3 @@
-
-
 export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 
 export interface BaseLoggerConfig {
@@ -19,10 +17,10 @@ export const isDevelopmentEnv = (nodeEnv?: string): boolean => {
 };
 
 export const baseLoggerOptions = {
-  
+
   messageKey: 'msg',
   errorKey: 'err',
 
-  
   timestamp: () => `,"time":"${new Date().toISOString()}"`,
 };
+

@@ -47,7 +47,6 @@ export async function streamAIResponse(params: StreamAIResponseParams): Promise<
 
   logger.info({ roomId, messageId, workflowId }, 'Starting AI streaming activity');
 
-  
   const startPayload: AIStreamStartPayload = {
     messageId,
     roomId,
@@ -68,23 +67,20 @@ export async function streamAIResponse(params: StreamAIResponseParams): Promise<
       content: userMessage.text,
     });
 
-    
     Context.current().heartbeat();
 
-    
     for await (const event of services.aiService.streamText({
       system: AI_SYSTEM_PROMPT,
       messages,
       temperature: AI_CONFIG.DEFAULT_TEMPERATURE,
       maxTokens: AI_CONFIG.DEFAULT_MAX_TOKENS,
     })) {
-      
+
       Context.current().heartbeat();
 
       if (event.type === 'text-delta' && event.delta) {
         accumulatedText += event.delta;
 
-        
         const chunkPayload: AIStreamChunkPayload = {
           messageId,
           roomId,
@@ -93,9 +89,6 @@ export async function streamAIResponse(params: StreamAIResponseParams): Promise<
         };
         ioServer.to(roomId).emit('ai_stream_chunk', chunkPayload);
 
-        
-        
-        
       }
 
       if (event.type === 'finish') {
@@ -125,7 +118,6 @@ export async function streamAIResponse(params: StreamAIResponseParams): Promise<
     const errorMessage = getErrorMessage(error);
     logger.error({ error: errorMessage, roomId, messageId }, 'AI streaming activity error');
 
-    
     const errorPayload: AIStreamErrorPayload = {
       messageId,
       roomId,
@@ -163,3 +155,4 @@ export async function saveCompletedResponse(params: SaveCompletedResponseParams)
     throw error;
   }
 }
+

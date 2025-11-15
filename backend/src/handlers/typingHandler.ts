@@ -17,8 +17,8 @@ export function createTypingHandler(_io: TypedServer, socket: TypedSocket, servi
         roomId,
       };
 
-      
       socket.to(roomId).emit('user_typing', payload);
     }
   };
 }
+

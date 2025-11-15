@@ -21,19 +21,16 @@ export class ServiceContainer {
   private constructor() {
     logger.info('Initializing service container');
 
-    
     this.userManager = new UserManager();
     this.chatHistory = new ChatHistoryService();
     this.aiService = new AIService();
     this.aiStreamManager = new AIStreamManager(); 
 
-    
     this.messageService = new MessageService(this.chatHistory, this.userManager);
 
     logger.info('Service container initialized');
   }
 
-  
   public static getInstance(): ServiceContainer {
     if (!ServiceContainer.instance) {
       ServiceContainer.instance = new ServiceContainer();
@@ -41,23 +38,20 @@ export class ServiceContainer {
     return ServiceContainer.instance;
   }
 
-  
   public setTemporalClient(client: Client): void {
     this.temporalClient = client;
     logger.info('Temporal client registered with service container');
   }
 
-  
   public static reset(): void {
     logger.info('Resetting service container');
     ServiceContainer.instance = null;
   }
 
-  
   public async cleanup(): Promise<void> {
     logger.info('Cleaning up service container');
     this.aiStreamManager.shutdown();
-    
-    
+
   }
 }
+

@@ -1,5 +1,3 @@
-
-
 import { createChildLogger } from '@chat-app/shared';
 
 const logger = createChildLogger({ module: 'rate-limiter' });
@@ -21,16 +19,12 @@ export class RateLimiter {
   constructor(config: Record<string, RateLimitConfig>) {
     this.limits = new Map();
     this.config = config;
-
-    
     setInterval(() => this.cleanup(), 60000); 
   }
 
-  
   check(socketId: string, eventName: string): boolean {
     const config = this.config[eventName];
     if (!config) {
-      
       return true;
     }
 
@@ -39,7 +33,6 @@ export class RateLimiter {
     const entry = this.limits.get(key);
 
     if (!entry || now > entry.resetAt) {
-      
       this.limits.set(key, {
         count: 1,
         resetAt: now + config.windowMs,
@@ -48,26 +41,20 @@ export class RateLimiter {
     }
 
     if (entry.count >= config.maxRequests) {
-      
-      logger.error(
-        { socketId, eventName, count: entry.count, maxRequests: config.maxRequests },
-        'Rate limit exceeded'
-      );
+      logger.error({ socketId, eventName, count: entry.count, maxRequests: config.maxRequests }, 'Rate limit exceeded');
       return false;
     }
 
-    
     entry.count++;
     return true;
   }
 
-  
   reset(socketId: string, eventName?: string): void {
     if (eventName) {
       const key = `${socketId}:${eventName}`;
       this.limits.delete(key);
     } else {
-      
+
       for (const key of this.limits.keys()) {
         if (key.startsWith(`${socketId}:`)) {
           this.limits.delete(key);
@@ -76,7 +63,6 @@ export class RateLimiter {
     }
   }
 
-  
   private cleanup(): void {
     const now = Date.now();
     let cleaned = 0;
@@ -89,7 +75,6 @@ export class RateLimiter {
     }
   }
 
-  
   getStats(socketId: string): Record<string, RateLimitEntry> {
     const stats: Record<string, RateLimitEntry> = {};
     for (const [key, entry] of this.limits.entries()) {
@@ -107,3 +92,4 @@ export const DEFAULT_RATE_LIMITS: Record<string, RateLimitConfig> = {
   typing: { maxRequests: 30, windowMs: 10000 },           
   get_history: { maxRequests: 5, windowMs: 60000 },       
 };
+

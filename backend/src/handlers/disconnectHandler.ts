@@ -21,10 +21,10 @@ export function createDisconnectHandler(io: TypedServer, socket: TypedSocket, se
       };
       io.to(roomId).emit('user_left', payload);
 
-      
       broadcastUsersList(io, services, roomId);
     } else {
       logger.info({ socketId: socket.id }, 'User disconnected (no room data)');
     }
   };
 }
+

@@ -18,12 +18,11 @@ export class MessageService {
     private readonly userManager: UserManager
   ) {}
 
-  
   async createMessage(
     data: unknown,
     socketId: string
   ): Promise<{ success: true; message: Message } | { success: false; error: string; code?: string }> {
-    
+
     const validation = validateData(messageDataSchema, data);
     if (!validation.success) {
       logger.error({ socketId, error: validation.error }, 'Invalid message data');
@@ -46,7 +45,6 @@ export class MessageService {
       };
     }
 
-    
     if (validatedData.roomId !== roomId) {
       logger.error({ socketId, requestedRoom: validatedData.roomId, userRoom: roomId },'Room ID mismatch');
       return {
@@ -56,7 +54,6 @@ export class MessageService {
       };
     }
 
-    
     const message: Message = {
       id: uuidv4(),
       username,
@@ -75,7 +72,6 @@ export class MessageService {
     return { success: true, message };
   }
 
-  
   private createPersistenceError(): MessageAck {
     return {
       success: false,
@@ -84,7 +80,6 @@ export class MessageService {
     };
   }
 
-  
   async persistMessage(message: Message): Promise<MessageAck> {
     try {
       const streamId = await this.chatHistory.addMessage(message);
@@ -108,7 +103,6 @@ export class MessageService {
     }
   }
 
-  
   async processMessage(
     data: unknown,
     socketId: string
@@ -116,7 +110,7 @@ export class MessageService {
     | { success: true; message: Message; ack: MessageAck }
     | { success: false; error: string; code?: string }
   > {
-    
+
     const createResult = await this.createMessage(data, socketId);
     if (!createResult.success) {
       return createResult;
@@ -124,7 +118,6 @@ export class MessageService {
 
     const { message } = createResult;
 
-    
     const ack = await this.persistMessage(message);
 
     return {
@@ -134,3 +127,4 @@ export class MessageService {
     };
   }
 }
+

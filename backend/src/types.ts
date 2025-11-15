@@ -1,5 +1,3 @@
-
-
 import { Server, Socket } from 'socket.io';
 import { ServerToClientEvents, ClientToServerEvents } from '@chat-app/shared';
 

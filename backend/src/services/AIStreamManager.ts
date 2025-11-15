@@ -1,5 +1,3 @@
-
-
 import { Server } from 'socket.io';
 import {
   createChildLogger,
@@ -22,23 +20,20 @@ export class AIStreamManager {
     logger.info('AI Stream Manager initialized (Temporal mode)');
   }
 
-  
   setTemporalClient(client: Client): void {
     this.temporalClient = client;
     logger.info('Temporal client registered with AI Stream Manager');
   }
 
-  
   async isStreamActive(roomId: string): Promise<boolean> {
     if (!this.temporalClient) return false;
 
     try {
-      
+
       const workflows = this.temporalClient.workflow.list({
         query: `WorkflowId STARTS_WITH "ai-stream-${roomId}-" AND ExecutionStatus = "Running"`,
       });
 
-      
       for await (const _workflow of workflows) {
         return true; 
       }
@@ -50,7 +45,6 @@ export class AIStreamManager {
     }
   }
 
-  
   async startStream(
     _io: TypedServer, 
     roomId: string,
@@ -68,11 +62,6 @@ export class AIStreamManager {
 
     logger.info({ roomId, messageId, workflowId }, 'Starting AI stream workflow');
 
-    
-    
-    
-    
-    
     await this.temporalClient.workflow.start('aiStreamingWorkflow', {
       taskQueue: TEMPORAL_CONFIG.taskQueue,
       workflowId,
@@ -82,7 +71,6 @@ export class AIStreamManager {
     logger.info({ workflowId, roomId }, 'Temporal workflow started successfully');
   }
 
-  
   async cancelStream(roomId: string): Promise<boolean> {
     if (!this.temporalClient) {
       logger.error('Cannot cancel stream - Temporal client not initialized');
@@ -90,7 +78,7 @@ export class AIStreamManager {
     }
 
     try {
-      
+
       const workflows = this.temporalClient.workflow.list({
         query: `WorkflowId STARTS_WITH "ai-stream-${roomId}-" AND ExecutionStatus = "Running"`,
       });
@@ -117,9 +105,9 @@ export class AIStreamManager {
     }
   }
 
-  
   shutdown(): void {
     logger.info('AI Stream Manager shut down');
-    
+
   }
 }
+

@@ -1,5 +1,3 @@
-
-
 export interface BaseUserEvent {
   username: string;
   userId: string;
