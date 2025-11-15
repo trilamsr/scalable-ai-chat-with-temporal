@@ -5,9 +5,6 @@ import { getErrorMessage } from '../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'history-handler' });
 
-/**
- * Handle chat history request
- */
 export function createGetHistoryHandler(_io: TypedServer, socket: TypedSocket, services: ServiceContainer) {
   return async (count?: number): Promise<void> => {
     const { username, roomId } = services.userManager.getUserContext(socket.id);
@@ -35,15 +32,12 @@ export function createGetHistoryHandler(_io: TypedServer, socket: TypedSocket, s
         { error: getErrorMessage(error), socketId: socket.id },
         'Failed to retrieve chat history'
       );
-      // Send empty array on error
+      
       socket.emit('chat_history', []);
     }
   };
 }
 
-/**
- * Handle clear history request
- */
 export function createClearHistoryHandler(io: TypedServer, socket: TypedSocket, services: ServiceContainer) {
   return async (
     roomId: string,
@@ -56,7 +50,7 @@ export function createClearHistoryHandler(io: TypedServer, socket: TypedSocket, 
     try {
       await services.chatHistory.clearHistory(roomId);
 
-      // Broadcast to all users in the room that history was cleared
+      
       io.to(roomId).emit('chat_history', []);
 
       callback?.({ success: true });

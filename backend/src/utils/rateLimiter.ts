@@ -1,7 +1,4 @@
-/**
- * Simple rate limiter for Socket.IO events
- * Tracks requests per user per event type
- */
+
 
 import { createChildLogger } from '@chat-app/shared';
 
@@ -13,13 +10,10 @@ interface RateLimitEntry {
 }
 
 interface RateLimitConfig {
-  maxRequests: number;     // Maximum requests allowed
-  windowMs: number;        // Time window in milliseconds
+  maxRequests: number;     
+  windowMs: number;        
 }
 
-/**
- * Rate limiter class using sliding window algorithm
- */
 export class RateLimiter {
   private limits: Map<string, RateLimitEntry>;
   private config: Record<string, RateLimitConfig>;
@@ -28,20 +22,15 @@ export class RateLimiter {
     this.limits = new Map();
     this.config = config;
 
-    // Cleanup old entries periodically
-    setInterval(() => this.cleanup(), 60000); // Every minute
+    
+    setInterval(() => this.cleanup(), 60000); 
   }
 
-  /**
-   * Check if request is allowed
-   * @param socketId - Socket ID making the request
-   * @param eventName - Event name being rate limited
-   * @returns true if allowed, false if rate limited
-   */
+  
   check(socketId: string, eventName: string): boolean {
     const config = this.config[eventName];
     if (!config) {
-      // No rate limit configured for this event
+      
       return true;
     }
 
@@ -50,7 +39,7 @@ export class RateLimiter {
     const entry = this.limits.get(key);
 
     if (!entry || now > entry.resetAt) {
-      // First request or window expired
+      
       this.limits.set(key, {
         count: 1,
         resetAt: now + config.windowMs,
@@ -59,7 +48,7 @@ export class RateLimiter {
     }
 
     if (entry.count >= config.maxRequests) {
-      // Rate limit exceeded
+      
       logger.warn(
         { socketId, eventName, count: entry.count, maxRequests: config.maxRequests },
         'Rate limit exceeded'
@@ -67,20 +56,18 @@ export class RateLimiter {
       return false;
     }
 
-    // Increment count
+    
     entry.count++;
     return true;
   }
 
-  /**
-   * Reset rate limit for a specific user/event
-   */
+  
   reset(socketId: string, eventName?: string): void {
     if (eventName) {
       const key = `${socketId}:${eventName}`;
       this.limits.delete(key);
     } else {
-      // Reset all events for this socket
+      
       for (const key of this.limits.keys()) {
         if (key.startsWith(`${socketId}:`)) {
           this.limits.delete(key);
@@ -89,9 +76,7 @@ export class RateLimiter {
     }
   }
 
-  /**
-   * Cleanup expired entries
-   */
+  
   private cleanup(): void {
     const now = Date.now();
     let cleaned = 0;
@@ -108,9 +93,7 @@ export class RateLimiter {
     }
   }
 
-  /**
-   * Get current stats for a socket
-   */
+  
   getStats(socketId: string): Record<string, RateLimitEntry> {
     const stats: Record<string, RateLimitEntry> = {};
     for (const [key, entry] of this.limits.entries()) {
@@ -123,11 +106,8 @@ export class RateLimiter {
   }
 }
 
-/**
- * Default rate limit configurations
- */
 export const DEFAULT_RATE_LIMITS: Record<string, RateLimitConfig> = {
-  send_message: { maxRequests: 10, windowMs: 10000 },     // 10 messages per 10 seconds
-  typing: { maxRequests: 30, windowMs: 10000 },           // 30 typing events per 10 seconds
-  get_history: { maxRequests: 5, windowMs: 60000 },       // 5 history requests per minute
+  send_message: { maxRequests: 10, windowMs: 10000 },     
+  typing: { maxRequests: 30, windowMs: 10000 },           
+  get_history: { maxRequests: 5, windowMs: 60000 },       
 };

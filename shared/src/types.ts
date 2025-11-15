@@ -1,9 +1,5 @@
-/**
- * Shared type definitions for socket events and messages
- * Used by both backend and frontend
- */
 
-// Base interfaces
+
 export interface BaseUserEvent {
   username: string;
   userId: string;
@@ -17,7 +13,6 @@ export interface UserInfo {
   roomId: string;
 }
 
-// Socket event payloads
 export type UserJoinedPayload = BaseUserEvent;
 export type UserLeftPayload = BaseUserEvent;
 
@@ -25,7 +20,6 @@ export interface UserTypingPayload extends Omit<BaseUserEvent, 'timestamp'> {
   isTyping: boolean;
 }
 
-// Message types
 export interface MessageData {
   text: string;
   roomId: string;
@@ -35,10 +29,9 @@ export interface Message extends BaseUserEvent {
   id: string;
   text: string;
   isSystem?: boolean;
-  role?: 'user' | 'assistant'; // AI conversation role
+  role?: 'user' | 'assistant'; 
 }
 
-// Acknowledgment response types
 export interface MessageAckSuccess {
   success: true;
   messageId: string;
@@ -58,7 +51,6 @@ export interface ValidationError {
   error: string;
 }
 
-// AI Streaming types
 export interface AIStreamStartPayload {
   messageId: string;
   roomId: string;
@@ -91,7 +83,6 @@ export interface AIStreamErrorPayload {
   timestamp: string;
 }
 
-// Socket event types for type-safe event handling
 export interface ServerToClientEvents {
   connect: () => void;
   disconnect: () => void;

@@ -1,7 +1,4 @@
-/**
- * Shared logger interface
- * Defines the common logging interface used by both backend and frontend
- */
+
 
 export interface ILogger {
   info(msg: string): void;

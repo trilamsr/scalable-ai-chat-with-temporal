@@ -1,7 +1,4 @@
-/**
- * Socket event handlers
- * Exports modular handler functions for different socket events
- */
+
 
 export { createJoinHandler } from './joinHandler';
 export { createMessageHandler } from './messageHandler';

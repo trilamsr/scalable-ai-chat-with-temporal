@@ -12,20 +12,8 @@ const logger = createChildLogger({ module: 'temporal-worker' });
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-/**
- * Temporal worker instance (singleton)
- */
 let temporalWorker: Worker | null = null;
 
-/**
- * Create and start Temporal worker
- *
- * The worker runs activities and workflows.
- * Activities need access to Socket.IO and services, so we initialize them first.
- *
- * @param io - Socket.IO server instance
- * @param services - Service container
- */
 export async function startTemporalWorker(
   io: Server,
   services: ServiceContainer
@@ -38,15 +26,15 @@ export async function startTemporalWorker(
   try {
     logger.info({ address: TEMPORAL_CONFIG.address }, 'Starting Temporal worker');
 
-    // Initialize activities with Socket.IO and services
+    
     activities.initializeActivities(io, services);
 
-    // Connect to Temporal server
+    
     const connection = await NativeConnection.connect({
       address: TEMPORAL_CONFIG.address,
     });
 
-    // Create worker
+    
     temporalWorker = await Worker.create({
       connection,
       namespace: TEMPORAL_CONFIG.namespace,
@@ -57,7 +45,7 @@ export async function startTemporalWorker(
       maxConcurrentWorkflowTaskExecutions: AI_CONFIG.MAX_CONCURRENT_WORKFLOWS,
     });
 
-    // Start the worker
+    
     await temporalWorker.run();
 
     logger.info('Temporal worker started successfully');
@@ -69,9 +57,6 @@ export async function startTemporalWorker(
   }
 }
 
-/**
- * Stop Temporal worker gracefully
- */
 export async function stopTemporalWorker(): Promise<void> {
   if (temporalWorker) {
     logger.info('Stopping Temporal worker');

@@ -4,12 +4,6 @@ import { TypedSocket } from '../types';
 import { createSystemMessage } from '../utils/messageHelpers';
 import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHelpers';
 
-/**
- * Hook for managing chat messages and history using a two-phase loading pattern
- * Phase 1: Load chat history first
- * Phase 2: Subscribe to real-time events (messages, user join/leave) only after history is loaded
- * This eliminates race conditions and duplicate messages without needing deduplication logic
- */
 export interface UseChatMessagesResult {
   messages: Message[];
   isLoadingHistory: boolean;
@@ -44,7 +38,6 @@ export function useChatMessages(socket: TypedSocket, logger: ILogger): UseChatMe
     addMessage(systemMessage);
   }, [addMessage]);
 
-  // Phase 1: Load history FIRST
   useEffect(() => {
     if (!socket || isHistoryLoaded) return;
 
@@ -52,11 +45,9 @@ export function useChatMessages(socket: TypedSocket, logger: ILogger): UseChatMe
       logger.info({ messageCount: historyMessages.length }, 'Chat history received');
       setIsLoadingHistory(false);
 
-      // Set history messages (filter out system messages from history)
       const nonSystemMessages = historyMessages.filter(msg => !msg.isSystem);
       setMessages(nonSystemMessages);
 
-      // Mark history as loaded, which will trigger Phase 2
       setIsHistoryLoaded(true);
     };
 
@@ -67,7 +58,6 @@ export function useChatMessages(socket: TypedSocket, logger: ILogger): UseChatMe
     };
   }, [socket, logger, isHistoryLoaded]);
 
-  // Phase 2: Subscribe to real-time events ONLY after history is loaded
   useEffect(() => {
     if (!socket || !isHistoryLoaded) return;
 

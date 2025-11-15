@@ -1,43 +1,37 @@
-/**
- * Centralized configuration management
- * All environment variables and app config consolidated here
- */
+
 
 import { SERVER_DEFAULTS, SOCKET_CONFIG, AI_CONFIG, REDIS_RETRY } from '@chat-app/shared';
 
-/**
- * Configuration interface
- */
 export interface AppConfig {
-  // Server configuration
+  
   server: {
     port: number;
     corsOrigin: string;
     env: string;
   };
 
-  // Socket.IO configuration
+  
   socket: {
     pingTimeout: number;
     pingInterval: number;
     connectTimeout: number;
   };
 
-  // Redis configuration
+  
   redis: {
     url: string;
     retryInitialDelay: number;
     retryMaxDelay: number;
   };
 
-  // Temporal configuration
+  
   temporal: {
     address: string;
     namespace: string;
     taskQueue: string;
   };
 
-  // AI configuration
+  
   ai: {
     apiKey: string;
     defaultModel: string;
@@ -47,13 +41,10 @@ export interface AppConfig {
     maxConcurrentWorkflows: number;
   };
 
-  // Frontend URL
+  
   frontendUrl: string;
 }
 
-/**
- * Load and validate configuration from environment variables
- */
 function loadConfig(): AppConfig {
   const config: AppConfig = {
     server: {
@@ -92,7 +83,7 @@ function loadConfig(): AppConfig {
     frontendUrl: process.env.FRONTEND_URL || SERVER_DEFAULTS.CORS_ORIGIN,
   };
 
-  // Validation
+  
   if (!config.ai.apiKey && config.server.env === 'production') {
     throw new Error('OPENAI_API_KEY is required in production');
   }
@@ -104,28 +95,16 @@ function loadConfig(): AppConfig {
   return config;
 }
 
-/**
- * Singleton configuration instance
- */
 export const config: AppConfig = loadConfig();
 
-/**
- * Check if running in development mode
- */
 export function isDevelopment(): boolean {
   return config.server.env === 'development';
 }
 
-/**
- * Check if running in production mode
- */
 export function isProduction(): boolean {
   return config.server.env === 'production';
 }
 
-/**
- * Check if running in test mode
- */
 export function isTest(): boolean {
   return config.server.env === 'test';
 }

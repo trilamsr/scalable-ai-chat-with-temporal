@@ -9,9 +9,6 @@ interface HeaderProps {
   onClearHistory: () => void;
 }
 
-/**
- * Memoized Header to prevent unnecessary re-renders
- */
 const Header: React.FC<HeaderProps> = React.memo(({ windowId, color, isConnected, username, roomId, onClearHistory }) => {
   return (
     <div

@@ -23,7 +23,6 @@ const App: React.FC = () => {
   useEffect(() => {
     logger.info({ backendUrl: BACKEND_URL, socketCount: userConfigs.length }, 'Initializing socket connections');
 
-    // Create 3 separate socket connections
     const newSockets = userConfigs.map((config, index) => {
       const socket = io(BACKEND_URL, {
         transports: ['websocket', 'polling'],
@@ -39,7 +38,6 @@ const App: React.FC = () => {
 
     setSockets(newSockets);
 
-    // Cleanup on unmount
     return () => {
       logger.info({ socketCount: newSockets.length }, 'Disconnecting all sockets');
       newSockets.forEach((socket, index) => {

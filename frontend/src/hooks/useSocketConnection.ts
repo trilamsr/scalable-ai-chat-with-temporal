@@ -3,10 +3,6 @@ import { ILogger } from '@chat-app/shared';
 import { TypedSocket } from '../types';
 import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHelpers';
 
-/**
- * Hook for managing socket connection lifecycle
- * Handles connect/disconnect events and user join with room support
- */
 export interface UseSocketConnectionResult {
   isConnected: boolean;
 }

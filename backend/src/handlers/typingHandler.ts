@@ -4,9 +4,6 @@ import { ServiceContainer } from '../services/ServiceContainer';
 
 const logger = createChildLogger({ module: 'typing-handler' });
 
-/**
- * Handle typing indicator
- */
 export function createTypingHandler(_io: TypedServer, socket: TypedSocket, services: ServiceContainer) {
   return (isTyping: boolean): void => {
     if (services.userManager.isUserConnected(socket.id)) {
@@ -23,7 +20,7 @@ export function createTypingHandler(_io: TypedServer, socket: TypedSocket, servi
         roomId,
       };
 
-      // Broadcast to room only (excluding sender)
+      
       socket.to(roomId).emit('user_typing', payload);
     }
   };

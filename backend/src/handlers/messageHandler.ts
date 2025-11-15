@@ -5,16 +5,13 @@ import { getErrorMessage } from '../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'message-handler' });
 
-/**
- * Handle incoming message with acknowledgment
- */
 export function createMessageHandler(io: TypedServer, socket: TypedSocket, services: ServiceContainer) {
   return async (data: MessageData, callback: (ack: MessageAck) => void): Promise<void> => {
-    // Process message through service layer
+    
     const result = await services.messageService.processMessage(data, socket.id);
 
     if (!result.success) {
-      // Validation or processing error
+      
       logger.warn(
         { socketId: socket.id, error: result.error, code: result.code },
         'Message processing failed'
@@ -30,10 +27,10 @@ export function createMessageHandler(io: TypedServer, socket: TypedSocket, servi
 
     const { message, ack } = result;
 
-    // Broadcast message to room only (including sender for consistency)
+    
     io.to(message.roomId).emit('receive_message', message);
 
-    // Send acknowledgment to sender
+    
     callback(ack);
 
     logger.info(
@@ -56,7 +53,7 @@ export function createMessageHandler(io: TypedServer, socket: TypedSocket, servi
         return services.aiStreamManager.startStream(
           io,
           message.roomId,
-          message, // Pass the full message object
+          message, 
           conversationHistory,
           socket.id
         );

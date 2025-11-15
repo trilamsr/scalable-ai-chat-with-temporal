@@ -12,10 +12,6 @@ interface State {
   error: Error | null;
 }
 
-/**
- * Error Boundary component to catch and handle React errors gracefully
- * Prevents entire app crash and provides fallback UI
- */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);

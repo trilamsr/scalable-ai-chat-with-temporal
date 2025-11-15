@@ -1,8 +1,4 @@
-/**
- * AI Stream Manager (Temporal Integration)
- * Starts and manages AI streaming workflows using Temporal
- * Provides durability and ensures no tokens are wasted
- */
+
 
 import { Server } from 'socket.io';
 import {
@@ -19,10 +15,6 @@ const logger = createChildLogger({ module: 'AIStreamManager' });
 
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
 
-/**
- * Manages AI streaming workflows using Temporal
- * All state is managed by Temporal - no in-memory session tracking needed
- */
 export class AIStreamManager {
   private temporalClient: Client | null = null;
 
@@ -30,30 +22,25 @@ export class AIStreamManager {
     logger.info('AI Stream Manager initialized (Temporal mode)');
   }
 
-  /**
-   * Set Temporal client (must be called after initialization)
-   */
+  
   setTemporalClient(client: Client): void {
     this.temporalClient = client;
     logger.info('Temporal client registered with AI Stream Manager');
   }
 
-  /**
-   * Check if a room has an active AI streaming workflow
-   * Queries Temporal directly for running workflows
-   */
+  
   async isStreamActive(roomId: string): Promise<boolean> {
     if (!this.temporalClient) return false;
 
     try {
-      // Query Temporal for running workflows with this room ID prefix
+      
       const workflows = this.temporalClient.workflow.list({
         query: `WorkflowId STARTS_WITH "ai-stream-${roomId}-" AND ExecutionStatus = "Running"`,
       });
 
-      // Check if any workflow exists
+      
       for await (const _workflow of workflows) {
-        return true; // Found an active workflow
+        return true; 
       }
       return false;
     } catch (error) {
@@ -63,14 +50,9 @@ export class AIStreamManager {
     }
   }
 
-  /**
-   * Start a new AI streaming workflow for a room
-   * The workflow provides durability and ensures no tokens are wasted
-   *
-   * Note: No need to track sessions in memory - Temporal manages all state
-   */
+  
   async startStream(
-    _io: TypedServer, // TypedServer passed but not used here - workflows handle Socket.IO via activities
+    _io: TypedServer, 
     roomId: string,
     userMessage: Message,
     conversationHistory: Message[],
@@ -86,11 +68,11 @@ export class AIStreamManager {
 
     logger.info({ roomId, messageId, workflowId }, 'Starting AI stream workflow');
 
-    // Start Temporal workflow
-    // The workflow will:
-    // 1. Stream AI response via activities (emits to Socket.IO in real-time)
-    // 2. Save the complete response to Redis
-    // 3. Provide durability - if server crashes, workflow resumes
+    
+    
+    
+    
+    
     await this.temporalClient.workflow.start('aiStreamingWorkflow', {
       taskQueue: TEMPORAL_CONFIG.taskQueue,
       workflowId,
@@ -100,10 +82,7 @@ export class AIStreamManager {
     logger.info({ workflowId, roomId }, 'Temporal workflow started successfully');
   }
 
-  /**
-   * Cancel an active stream by terminating the workflow
-   * Queries Temporal to find and terminate running workflows for this room
-   */
+  
   async cancelStream(roomId: string): Promise<boolean> {
     if (!this.temporalClient) {
       logger.warn('Cannot cancel stream - Temporal client not initialized');
@@ -111,7 +90,7 @@ export class AIStreamManager {
     }
 
     try {
-      // Find running workflows for this room
+      
       const workflows = this.temporalClient.workflow.list({
         query: `WorkflowId STARTS_WITH "ai-stream-${roomId}-" AND ExecutionStatus = "Running"`,
       });
@@ -138,12 +117,9 @@ export class AIStreamManager {
     }
   }
 
-  /**
-   * Cleanup on shutdown
-   * Note: Workflows continue running in Temporal even after shutdown
-   */
+  
   shutdown(): void {
     logger.info('AI Stream Manager shut down');
-    // No cleanup needed - Temporal manages workflow lifecycle
+    
   }
 }

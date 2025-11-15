@@ -3,10 +3,6 @@ import { UserTypingPayload, ILogger, CHAT_CONFIG } from '@chat-app/shared';
 import { TypedSocket } from '../types';
 import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHelpers';
 
-/**
- * Hook for managing typing indicator functionality
- * Handles both receiving typing events from others and sending own typing status
- */
 export interface UseTypingIndicatorResult {
   typingUsers: Set<string>;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => void;

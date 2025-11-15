@@ -7,10 +7,6 @@ interface UserData {
   roomId: string;
 }
 
-/**
- * Manages connected users and their information
- * Provides centralized user state management with room support
- */
 export class UserManager {
   private connectedUsers: Map<string, UserData>;
 
@@ -18,12 +14,7 @@ export class UserManager {
     this.connectedUsers = new Map();
   }
 
-  /**
-   * Add a user to the connected users list
-   * @param socketId - Socket ID of the user
-   * @param username - Username of the user
-   * @param roomId - Room the user is joining
-   */
+  
   addUser(socketId: string, username: string, roomId: string): void {
     this.connectedUsers.set(socketId, { username, roomId });
     logger.info(
@@ -32,11 +23,7 @@ export class UserManager {
     );
   }
 
-  /**
-   * Remove a user from the connected users list
-   * @param socketId - Socket ID of the user
-   * @returns UserData of the removed user, or undefined if not found
-   */
+  
   removeUser(socketId: string): UserData | undefined {
     const userData = this.connectedUsers.get(socketId);
     this.connectedUsers.delete(socketId);
@@ -51,29 +38,17 @@ export class UserManager {
     return userData;
   }
 
-  /**
-   * Get username for a given socket ID
-   * @param socketId - Socket ID to look up
-   * @returns Username, or 'Anonymous' if not found
-   */
+  
   getUsername(socketId: string): string {
     return this.connectedUsers.get(socketId)?.username || 'Anonymous';
   }
 
-  /**
-   * Get room for a given socket ID
-   * @param socketId - Socket ID to look up
-   * @returns Room name, or undefined if not found
-   */
+  
   getRoomId(socketId: string): string | undefined {
     return this.connectedUsers.get(socketId)?.roomId;
   }
 
-  /**
-   * Get user context (username and roomId) for a given socket ID
-   * @param socketId - Socket ID to look up
-   * @returns Object containing username and roomId, or { username: 'Anonymous', roomId: undefined } if not found
-   */
+  
   getUserContext(socketId: string): { username: string; roomId: string | undefined } {
     const userData = this.connectedUsers.get(socketId);
     return {
@@ -82,11 +57,7 @@ export class UserManager {
     };
   }
 
-  /**
-   * Get list of all connected users in a specific room
-   * @param roomId - Room name to filter by (optional - returns all if not provided)
-   * @returns Array of UserInfo objects
-   */
+  
   getUsersList(roomId?: string): UserInfo[] {
     return Array.from(this.connectedUsers.entries())
       .filter(([_, userData]) => !roomId || userData.roomId === roomId)
@@ -97,17 +68,13 @@ export class UserManager {
       }));
   }
 
-  /**
-   * Get total number of connected users
-   * @param roomId - Room name to filter by (optional - returns all if not provided)
-   * @returns User count
-   */
+  
   getUserCount(roomId?: string): number {
     if (!roomId) {
       return this.connectedUsers.size;
     }
 
-    // Use direct iteration for better performance
+    
     let count = 0;
     for (const userData of this.connectedUsers.values()) {
       if (userData.roomId === roomId) count++;
@@ -115,11 +82,7 @@ export class UserManager {
     return count;
   }
 
-  /**
-   * Check if a user is connected
-   * @param socketId - Socket ID to check
-   * @returns True if user is connected
-   */
+  
   isUserConnected(socketId: string): boolean {
     return this.connectedUsers.has(socketId);
   }

@@ -14,26 +14,21 @@ import { getErrorMessage } from './utils/errorHelpers';
 const app = express();
 const server = http.createServer(app);
 
-// Initialize service container
 const services = ServiceContainer.getInstance();
 logger.info('Service container initialized');
 
-// Configure CORS for Socket.io with type-safe events
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: {
     origin: process.env.FRONTEND_URL || SERVER_DEFAULTS.CORS_ORIGIN,
     methods: ['GET', 'POST'],
     credentials: true,
   },
-  // Connection timeout settings
+  
   pingTimeout: SOCKET_CONFIG.PING_TIMEOUT,
   pingInterval: SOCKET_CONFIG.PING_INTERVAL,
   connectTimeout: SOCKET_CONFIG.CONNECT_TIMEOUT,
 });
 
-// Configure Redis Adapter for horizontal scaling
-// Creates a pub/sub pair for Socket.IO communication across multiple instances
-// Use lazyConnect=true to prevent automatic connection, then connect manually
 const pubClient = createRedisClient(true);
 const subClient = pubClient.duplicate();
 
@@ -47,23 +42,18 @@ Promise.all([pubClient.connect(), subClient.connect()])
     process.exit(1);
   });
 
-// Initialize Temporal client and worker
 let temporalWorkerStarted = false;
 
-/**
- * Initialize Temporal services asynchronously
- * Handles errors gracefully to prevent server crash
- */
 async function initializeTemporalServices(): Promise<void> {
   try {
     const client = await getTemporalClient();
     logger.info('Temporal client initialized');
 
-    // Register Temporal client with services
+    
     services.setTemporalClient(client);
     services.aiStreamManager.setTemporalClient(client);
 
-    // Start Temporal worker in background (non-blocking)
+    
     try {
       await startTemporalWorker(io, services);
       temporalWorkerStarted = true;
@@ -96,7 +86,7 @@ app.get('/health', async (_req: Request, res: Response) => {
   logger.debug('Health check endpoint accessed');
 
   try {
-    // Check Redis connectivity
+    
     await redis.ping();
     const userCount = getConnectedUsersCount(services);
 
@@ -116,7 +106,6 @@ app.get('/health', async (_req: Request, res: Response) => {
   }
 });
 
-// Initialize socket event handlers
 initializeSocket(io, services);
 
 const PORT = process.env.PORT || SERVER_DEFAULTS.PORT;
@@ -125,9 +114,6 @@ server.listen(PORT, () => {
   logger.info({ port: PORT }, 'WebSocket server running');
 });
 
-/**
- * Close Socket.IO connections
- */
 async function closeSocketIO(): Promise<void> {
   return new Promise((resolve) => {
     io.close(() => {
@@ -137,9 +123,6 @@ async function closeSocketIO(): Promise<void> {
   });
 }
 
-/**
- * Close HTTP server
- */
 async function closeHTTPServer(): Promise<void> {
   return new Promise((resolve, reject) => {
     server.close((err) => {
@@ -154,9 +137,6 @@ async function closeHTTPServer(): Promise<void> {
   });
 }
 
-/**
- * Stop Temporal services
- */
 async function stopTemporalServices(): Promise<void> {
   if (temporalWorkerStarted) {
     try {
@@ -175,9 +155,6 @@ async function stopTemporalServices(): Promise<void> {
   }
 }
 
-/**
- * Close Redis connections
- */
 async function closeRedisConnections(): Promise<void> {
   try {
     await Promise.all([pubClient.quit(), subClient.quit()]);
@@ -193,9 +170,6 @@ async function closeRedisConnections(): Promise<void> {
   }
 }
 
-/**
- * Cleanup services
- */
 async function cleanupServices(): Promise<void> {
   try {
     await services.cleanup();
@@ -205,21 +179,17 @@ async function cleanupServices(): Promise<void> {
   }
 }
 
-/**
- * Graceful shutdown handler
- * Coordinates shutdown of all services
- */
 async function gracefulShutdown(signal: string): Promise<void> {
   logger.info({ signal }, 'Shutdown signal received, starting graceful shutdown');
 
-  // Set timeout for forced shutdown
+  
   const forceShutdownTimeout = setTimeout(() => {
     logger.error('Forced shutdown after timeout');
     process.exit(1);
   }, SHUTDOWN_TIMEOUT_MS);
 
   try {
-    // Close all connections in order
+    
     await closeSocketIO();
     await closeHTTPServer();
     await stopTemporalServices();
@@ -236,6 +206,5 @@ async function gracefulShutdown(signal: string): Promise<void> {
   }
 }
 
-// Register shutdown handlers
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));

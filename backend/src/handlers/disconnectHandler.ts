@@ -5,9 +5,6 @@ import { broadcastUsersList } from '../utils/broadcastHelpers';
 
 const logger = createChildLogger({ module: 'disconnect-handler' });
 
-/**
- * Handle user disconnection
- */
 export function createDisconnectHandler(io: TypedServer, socket: TypedSocket, services: ServiceContainer) {
   return (): void => {
     const userData = services.userManager.removeUser(socket.id);
@@ -24,7 +21,7 @@ export function createDisconnectHandler(io: TypedServer, socket: TypedSocket, se
       };
       io.to(roomId).emit('user_left', payload);
 
-      // Broadcast updated users list to room
+      
       broadcastUsersList(io, services, roomId);
     } else {
       logger.info({ socketId: socket.id }, 'User disconnected (no room data)');

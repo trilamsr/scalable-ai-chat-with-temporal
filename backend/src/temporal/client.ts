@@ -4,34 +4,20 @@ import { getErrorMessage } from '../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'temporal-client' });
 
-/**
- * Temporal client instance (singleton)
- */
 let temporalClient: Client | null = null;
 
-/**
- * Temporal configuration
- */
 export const TEMPORAL_CONFIG = {
   address: process.env.TEMPORAL_ADDRESS || 'localhost:7233',
   namespace: 'default',
   taskQueue: 'ai-chat-queue',
-  // Connection retry settings (PostgreSQL starts faster than Cassandra)
   maxRetries: 20,
   retryDelayMs: 1500,
 };
 
-/**
- * Sleep helper for retries
- */
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/**
- * Get or create Temporal client with retry logic
- * @returns Temporal client instance
- */
 export async function getTemporalClient(): Promise<Client> {
   if (temporalClient) {
     return temporalClient;
@@ -79,9 +65,6 @@ export async function getTemporalClient(): Promise<Client> {
   throw lastError;
 }
 
-/**
- * Close Temporal client connection
- */
 export async function closeTemporalClient(): Promise<void> {
   if (temporalClient) {
     logger.info('Closing Temporal client connection');

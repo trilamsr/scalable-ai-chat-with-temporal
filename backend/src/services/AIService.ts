@@ -1,7 +1,4 @@
-/**
- * AI Service Implementation using Vercel AI SDK
- * Implements the IAIStreamService interface from shared module
- */
+
 
 import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
@@ -17,9 +14,6 @@ import { getErrorMessage } from '../utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'AIService' });
 
-/**
- * Implementation of AI streaming service using Vercel AI SDK
- */
 export class AIService implements IAIStreamService {
   private apiKey: string;
   private defaultModel: string;
@@ -33,9 +27,7 @@ export class AIService implements IAIStreamService {
     }
   }
 
-  /**
-   * Stream text generation from OpenAI
-   */
+  
   async *streamText(options: AIStreamOptions): AsyncIterable<AIStreamEvent> {
     if (!this.apiKey) {
       yield {
@@ -61,7 +53,7 @@ export class AIService implements IAIStreamService {
       const stream = await streamText({
         model,
         prompt: options.prompt,
-        messages: options.messages as any, // Cast to avoid type mismatch with AI SDK
+        messages: options.messages as any, 
         system: options.system,
         temperature: options.temperature,
         maxOutputTokens: options.maxTokens,
@@ -74,7 +66,7 @@ export class AIService implements IAIStreamService {
         maxRetries: options.maxRetries ?? 2,
       });
 
-      // Stream text chunks
+      
       for await (const chunk of stream.textStream) {
         const event: AIStreamEvent = {
           type: 'text-delta',
@@ -85,7 +77,7 @@ export class AIService implements IAIStreamService {
         options.onTextDelta?.(chunk);
       }
 
-      // Get final result
+      
       const result = await stream;
       const usage = await result.usage;
 
@@ -121,9 +113,7 @@ export class AIService implements IAIStreamService {
     }
   }
 
-  /**
-   * Stream text and collect the full result
-   */
+  
   async streamTextComplete(options: AIStreamOptions): Promise<AIStreamResult> {
     let fullText = '';
     let finalEvent: AIStreamEvent | null = null;

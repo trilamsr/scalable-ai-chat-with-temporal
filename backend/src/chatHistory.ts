@@ -4,30 +4,19 @@ import { handleRedisError } from './utils/errorHelpers';
 
 const logger = createChildLogger({ module: 'chat-history' });
 
-/**
- * Chat history service using Redis Streams
- */
 export class ChatHistoryService {
-  /**
-   * Get Redis key for a room's message stream
-   * @param roomId - Room name
-   * @returns Redis key
-   */
+  
   private getRoomKey(roomId: string): string {
     return `${REDIS_KEYS.CHAT_MESSAGES}:${roomId}`;
   }
 
-  /**
-   * Add a message to the chat history stream
-   * @param message - The message to store
-   * @returns The Redis stream entry ID
-   */
+  
   async addMessage(message: Message): Promise<string | null> {
     const roomId = message.roomId;
     const streamKey = this.getRoomKey(message.roomId);
 
     try {
-      // XADD chat:messages:room * field1 value1 field2 value2 ...
+      
       const fields = [
         'id', message.id,
         'username', message.username,
@@ -37,7 +26,7 @@ export class ChatHistoryService {
         'roomId', roomId,
       ];
 
-      // Add role if present (for AI conversation context)
+      
       if (message.role) {
         fields.push('role', message.role);
       }
@@ -56,30 +45,25 @@ export class ChatHistoryService {
     }
   }
 
-  /**
-   * Get recent messages from the chat history
-   * @param roomId - Room name to get messages from
-   * @param count - Number of messages to retrieve (default: 50)
-   * @returns Array of messages in chronological order
-   */
+  
   async getRecentMessages(roomId: string, count: number = CHAT_CONFIG.DEFAULT_MESSAGE_COUNT): Promise<Message[]> {
     const streamKey = this.getRoomKey(roomId);
 
     try {
-      // XREVRANGE returns messages in reverse chronological order
-      // We use XREVRANGE to get the most recent messages efficiently
+      
+      
       const results = await redis.xrevrange(streamKey, '+', '-', 'COUNT', count);
 
-      // Early return if no results
+      
       if (!results || results.length === 0) {
         logger.debug({ roomId }, 'No messages found in history');
         return [];
       }
 
-      // Parse Redis stream entries and reverse to get chronological order
+      
       const messages: Message[] = results
         .map(([_streamId, fields]) => {
-          // Redis returns fields as [key1, value1, key2, value2, ...]
+          
           const fieldMap: Record<string, string> = {};
           for (let i = 0; i < fields.length; i += 2) {
             fieldMap[fields[i]] = fields[i + 1];
@@ -96,8 +80,7 @@ export class ChatHistoryService {
           };
 
           return message;
-        })
-        .reverse(); // Reverse to get chronological order (oldest first)
+        }).reverse(); 
 
       logger.debug({ count: messages.length, roomId }, 'Retrieved messages from history');
 
@@ -108,11 +91,7 @@ export class ChatHistoryService {
     }
   }
 
-  /**
-   * Get the total number of messages in the stream
-   * @param roomId - Room name
-   * @returns Total message count
-   */
+  
   async getMessageCount(roomId: string): Promise<number> {
     const streamKey = this.getRoomKey(roomId);
 
@@ -125,17 +104,12 @@ export class ChatHistoryService {
     }
   }
 
-  /**
-   * Trim the stream to keep only the most recent messages
-   * This helps manage memory usage
-   * @param roomId - Room name
-   * @param maxLength - Maximum number of messages to keep (default: 1000)
-   */
+  
   async trimHistory(roomId: string, maxLength: number = CHAT_CONFIG.MAX_HISTORY_LENGTH): Promise<void> {
     const streamKey = this.getRoomKey(roomId);
 
     try {
-      // XTRIM with MAXLEN keeps approximately the specified number of entries
+      
       await redis.xtrim(streamKey, 'MAXLEN', '~', maxLength);
       logger.info({ roomId, maxLength }, 'Chat history trimmed');
     } catch (error) {
@@ -143,11 +117,7 @@ export class ChatHistoryService {
     }
   }
 
-  /**
-   * Clear all chat history for a room
-   * WARNING: This is a destructive operation
-   * @param roomId - Room name (optional - clears all rooms if not provided)
-   */
+  
   async clearHistory(roomId?: string): Promise<void> {
     try {
       if (roomId) {

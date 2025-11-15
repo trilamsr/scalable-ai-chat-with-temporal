@@ -3,10 +3,6 @@ import { UserInfo, ILogger } from '@chat-app/shared';
 import { TypedSocket } from '../types';
 import { registerSocketEvents, unregisterSocketEvents } from '../utils/socketHelpers';
 
-/**
- * Hook for managing online users list
- * Tracks currently connected users
- */
 export interface UseOnlineUsersResult {
   onlineUsers: UserInfo[];
 }

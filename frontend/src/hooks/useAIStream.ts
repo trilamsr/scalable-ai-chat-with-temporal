@@ -1,8 +1,3 @@
-/**
- * Hook for managing AI streaming state
- * Handles AI stream start, chunks, finish, and error events
- */
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { TypedSocket } from '../types';
 import {
@@ -47,13 +42,11 @@ export function useAIStream(
 
   const [aiMessage, setAIMessage] = useState<Message | null>(null);
 
-  // Store options in a ref to avoid recreating callbacks when options change
   const optionsRef = useRef(options);
   useEffect(() => {
     optionsRef.current = options;
   }, [options]);
 
-  // Handle AI stream start
   const handleAIStreamStart = useCallback(
     (payload: AIStreamStartPayload) => {
       if (payload.roomId !== roomId) return;
@@ -67,7 +60,6 @@ export function useAIStream(
         error: null,
       });
 
-      // Create initial AI message
       const initialMessage: Message = {
         id: payload.messageId,
         username: AI_USER.USERNAME,
@@ -83,7 +75,6 @@ export function useAIStream(
     [roomId, logger]
   );
 
-  // Handle AI stream chunk
   const handleAIStreamChunk = useCallback(
     (payload: AIStreamChunkPayload) => {
       if (payload.roomId !== roomId) return;
@@ -95,7 +86,6 @@ export function useAIStream(
         accumulatedText: payload.accumulatedText,
       }));
 
-      // Update AI message with accumulated text
       setAIMessage((prevMessage) => {
         if (prevMessage && prevMessage.id === payload.messageId) {
           return {
@@ -109,7 +99,6 @@ export function useAIStream(
     [roomId, logger]
   );
 
-  // Handle AI stream finish
   const handleAIStreamFinish = useCallback(
     (payload: AIStreamFinishPayload) => {
       if (payload.roomId !== roomId) return;
@@ -126,7 +115,6 @@ export function useAIStream(
         error: null,
       });
 
-      // Finalize AI message and call onFinish callback
       setAIMessage((prevMessage) => {
         if (prevMessage && prevMessage.id === payload.messageId) {
           const finalMessage = {
@@ -134,8 +122,6 @@ export function useAIStream(
             text: payload.fullText,
             timestamp: payload.timestamp,
           };
-          // Call onFinish callback to add message to regular messages
-          // Use ref to access latest options without adding to dependencies
           optionsRef.current?.onFinish?.(finalMessage);
         }
         return null;
@@ -144,7 +130,6 @@ export function useAIStream(
     [roomId, logger]
   );
 
-  // Handle AI stream error
   const handleAIStreamError = useCallback(
     (payload: AIStreamErrorPayload) => {
       if (payload.roomId !== roomId) return;

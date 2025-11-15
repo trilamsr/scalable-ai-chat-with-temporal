@@ -15,13 +15,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
   const [inputMessage, setInputMessage] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Create a logger specific to this chat window
   const logger = useMemo(
     () => createChildLogger({ component: 'ChatWindow', windowId, username, roomId }),
     [windowId, username, roomId]
   );
 
-  // Custom hooks for managing chat functionality
   const { messages, isLoadingHistory, requestHistory, setMessages } = useChatMessages(socket, logger);
   const { isConnected } = useSocketConnection(socket, username, roomId, logger, requestHistory);
   const { onlineUsers } = useOnlineUsers(socket, logger);
@@ -32,12 +30,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
   );
   const { aiStreamState, aiMessage } = useAIStream(socket, roomId, logger, {
     onFinish: (finalMessage) => {
-      // Add finalized AI message to messages array
       setMessages((prev) => [...prev, finalMessage]);
     },
   });
 
-  // Combine regular messages with AI streaming message
   const allMessages = useMemo(() => {
     const combined = [...messages];
     if (aiMessage && aiStreamState.isStreaming) {
@@ -57,7 +53,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Don't send messages while AI is streaming
     if (aiStreamState.isStreaming) {
       logger.debug('Message send blocked: AI is streaming');
       return;
@@ -67,13 +62,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
       const messageText = inputMessage.trim();
       logger.info({ textLength: messageText.length }, 'Sending message');
 
-      // Send message with acknowledgment callback
       socket.emit('send_message', { text: messageText, roomId }, (ack) => {
         if (ack.success) {
           logger.debug({ messageId: ack.messageId }, 'Message acknowledged and persisted');
         } else {
           logger.error({ error: ack.error, code: ack.code }, 'Message failed to send or persist');
-          // Could show error notification to user here
         }
       });
 
@@ -94,7 +87,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
     socket.emit('clear_history', roomId, (response) => {
       if (response?.success) {
         logger.info({ roomId }, 'Chat history cleared successfully');
-        // Clear local messages
         setMessages([]);
       } else {
         logger.error({ error: response?.error }, 'Failed to clear chat history');

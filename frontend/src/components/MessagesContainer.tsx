@@ -10,10 +10,6 @@ interface MessagesContainerProps {
   isLoadingHistory?: boolean;
 }
 
-/**
- * Memoized MessagesContainer to prevent unnecessary re-renders
- * Only re-renders when messages, username, typingUsers, or isLoadingHistory change
- */
 const MessagesContainer: React.FC<MessagesContainerProps> = React.memo(({
   messages,
   username,

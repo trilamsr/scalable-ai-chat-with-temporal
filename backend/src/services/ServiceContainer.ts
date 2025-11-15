@@ -8,17 +8,6 @@ import { Client } from '@temporalio/client';
 
 const logger = createChildLogger({ module: 'service-container' });
 
-/**
- * Service container for dependency injection
- *
- * Uses Singleton pattern to ensure a single instance of all services
- * throughout the application lifecycle. This provides:
- * - Centralized service management
- * - Consistent dependency injection
- * - Easy testing via reset()
- *
- * All services should be accessed through this container, not instantiated directly.
- */
 export class ServiceContainer {
   private static instance: ServiceContainer | null = null;
 
@@ -32,23 +21,19 @@ export class ServiceContainer {
   private constructor() {
     logger.info('Initializing service container');
 
-    // Initialize services in dependency order
+    
     this.userManager = new UserManager();
     this.chatHistory = new ChatHistoryService();
     this.aiService = new AIService();
-    this.aiStreamManager = new AIStreamManager(); // Temporal mode - no dependencies needed
+    this.aiStreamManager = new AIStreamManager(); 
 
-    // Initialize services that depend on others
+    
     this.messageService = new MessageService(this.chatHistory, this.userManager);
 
     logger.info('Service container initialized');
   }
 
-  /**
-   * Get the singleton service container instance
-   * Creates the instance on first call (lazy initialization)
-   * @returns Service container instance
-   */
+  
   public static getInstance(): ServiceContainer {
     if (!ServiceContainer.instance) {
       ServiceContainer.instance = new ServiceContainer();
@@ -56,31 +41,23 @@ export class ServiceContainer {
     return ServiceContainer.instance;
   }
 
-  /**
-   * Set Temporal client (called after initialization)
-   * @param client - Temporal client instance
-   */
+  
   public setTemporalClient(client: Client): void {
     this.temporalClient = client;
     logger.info('Temporal client registered with service container');
   }
 
-  /**
-   * Reset the service container (useful for testing)
-   * Clears the singleton instance, forcing a new one on next getInstance()
-   */
+  
   public static reset(): void {
     logger.info('Resetting service container');
     ServiceContainer.instance = null;
   }
 
-  /**
-   * Perform cleanup on all services
-   */
+  
   public async cleanup(): Promise<void> {
     logger.info('Cleaning up service container');
     this.aiStreamManager.shutdown();
-    // Add any cleanup logic for services here
-    // e.g., closing connections, flushing buffers, etc.
+    
+    
   }
 }

@@ -3,9 +3,6 @@ import { createChildLogger, REDIS_RETRY } from '@chat-app/shared';
 
 const logger = createChildLogger({ module: 'redis' });
 
-/**
- * Default Redis configuration
- */
 const DEFAULT_REDIS_CONFIG = {
   maxRetriesPerRequest: 3,
   retryStrategy(times: number) {
@@ -17,15 +14,10 @@ const DEFAULT_REDIS_CONFIG = {
   },
 };
 
-/**
- * Create a new Redis client with standard configuration
- * Used for creating pub/sub clients for Socket.IO adapter
- * @param lazyConnect - If true, client won't connect automatically (useful for Socket.IO adapter)
- */
 export function createRedisClient(lazyConnect: boolean = false): Redis {
   const config = {
     ...DEFAULT_REDIS_CONFIG,
-    lazyConnect, // Only connect when explicitly told to
+    lazyConnect, 
   };
 
   const client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', config);
@@ -39,15 +31,8 @@ export function createRedisClient(lazyConnect: boolean = false): Redis {
   return client;
 }
 
-/**
- * Redis client instance (main client for chat history)
- */
 export const redis = createRedisClient();
 
-/**
- * Graceful shutdown handler for Redis
- * Exported to be called by main server shutdown coordinator
- */
 export async function shutdownRedis(): Promise<void> {
   logger.info('Shutting down Redis client');
   await redis.quit();
