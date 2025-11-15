@@ -54,7 +54,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
     e.preventDefault();
 
     if (aiStreamState.isStreaming) {
-      logger.debug('Message send blocked: AI is streaming');
+      logger.info('Message send blocked: AI is streaming');
       return;
     }
 
@@ -64,7 +64,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
 
       socket.emit('send_message', { text: messageText, roomId }, (ack) => {
         if (ack.success) {
-          logger.debug({ messageId: ack.messageId }, 'Message acknowledged and persisted');
+          logger.info({ messageId: ack.messageId }, 'Message acknowledged and persisted');
         } else {
           logger.error({ error: ack.error, code: ack.code }, 'Message failed to send or persist');
         }
@@ -81,9 +81,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ socket, windowId, username, col
 
   const handleClearHistory = () => {
     if (!socket || !isConnected) return;
-
-    logger.warn({ roomId }, 'Clearing chat history');
-
     socket.emit('clear_history', roomId, (response) => {
       if (response?.success) {
         logger.info({ roomId }, 'Chat history cleared successfully');

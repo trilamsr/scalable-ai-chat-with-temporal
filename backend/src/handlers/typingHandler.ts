@@ -10,9 +10,6 @@ export function createTypingHandler(_io: TypedServer, socket: TypedSocket, servi
       const { username, roomId } = services.userManager.getUserContext(socket.id);
 
       if (!roomId) return;
-
-      logger.debug({ username, socketId: socket.id, roomId, isTyping }, 'User typing status');
-
       const payload: UserTypingPayload = {
         username,
         userId: socket.id,

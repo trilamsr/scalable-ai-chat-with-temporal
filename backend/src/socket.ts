@@ -22,7 +22,7 @@ function withRateLimit<T extends (...args: any[]) => any>(
 ): T {
   return ((...args: any[]) => {
     if (!rateLimiter.check(socket.id, eventName)) {
-      socketLogger.warn({ socketId: socket.id, eventName }, 'Rate limit exceeded');
+      socketLogger.error({ socketId: socket.id, eventName }, 'Rate limit exceeded');
       socket.emit('rate_limit_error', { message: 'Rate limit exceeded. Please slow down.' });
       return;
     }

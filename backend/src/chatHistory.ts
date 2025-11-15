@@ -33,11 +33,6 @@ export class ChatHistoryService {
 
       const streamId = await redis.xadd(streamKey, '*', ...fields);
 
-      logger.debug(
-        { messageId: message.id, streamId, roomId },
-        'Message added to history stream'
-      );
-
       return streamId;
     } catch (error) {
       handleRedisError(logger, error, { messageId: message.id, roomId }, 'Failed to add message to history');
@@ -55,10 +50,7 @@ export class ChatHistoryService {
       const results = await redis.xrevrange(streamKey, '+', '-', 'COUNT', count);
 
       
-      if (!results || results.length === 0) {
-        logger.debug({ roomId }, 'No messages found in history');
-        return [];
-      }
+      if (!results || results.length === 0) { return [] }
 
       
       const messages: Message[] = results
@@ -81,8 +73,6 @@ export class ChatHistoryService {
 
           return message;
         }).reverse(); 
-
-      logger.debug({ count: messages.length, roomId }, 'Retrieved messages from history');
 
       return messages;
     } catch (error) {
@@ -123,7 +113,7 @@ export class ChatHistoryService {
       if (roomId) {
         const streamKey = this.getRoomKey(roomId);
         await redis.del(streamKey);
-        logger.warn({ roomId }, 'Room chat history cleared');
+        logger.info({ roomId }, 'Room chat history cleared');
       }
     } catch (error) {
       handleRedisError(logger, error, { roomId }, 'Failed to clear chat history');

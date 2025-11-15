@@ -64,7 +64,6 @@ export function useChatMessages(socket: TypedSocket, logger: ILogger): UseChatMe
     logger.info('History loaded, subscribing to real-time events');
 
     const handleReceiveMessage = (message: Message) => {
-      logger.debug({ messageId: message.id, from: message.username, textLength: message.text.length },'Message received');
       addMessage(message);
     };
 

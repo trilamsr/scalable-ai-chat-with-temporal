@@ -28,7 +28,7 @@ export function useSocketConnection(
 
     const handleDisconnect = () => {
       setIsConnected(false);
-      logger.warn('Disconnected from server');
+      logger.info('Disconnected from server');
     };
 
     const eventMap = {

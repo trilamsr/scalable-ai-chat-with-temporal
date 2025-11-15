@@ -20,7 +20,6 @@ export function createJoinHandler(io: TypedServer, socket: TypedSocket, services
     
     const usernameValidation = validateData(usernameSchema, username);
     if (!usernameValidation.success) {
-      logger.warn({ socketId: socket.id, error: usernameValidation.error }, 'Invalid username');
       callback?.({ success: false, error: usernameValidation.error });
       return;
     }
@@ -28,7 +27,6 @@ export function createJoinHandler(io: TypedServer, socket: TypedSocket, services
     
     const roomIdValidation = validateData(roomIdSchema, roomId);
     if (!roomIdValidation.success) {
-      logger.warn({ socketId: socket.id, error: roomIdValidation.error }, 'Invalid roomId');
       callback?.({ success: false, error: roomIdValidation.error });
       return;
     }

@@ -9,14 +9,8 @@ export function createMessageHandler(io: TypedServer, socket: TypedSocket, servi
   return async (data: MessageData, callback: (ack: MessageAck) => void): Promise<void> => {
     
     const result = await services.messageService.processMessage(data, socket.id);
-
     if (!result.success) {
-      
-      logger.warn(
-        { socketId: socket.id, error: result.error, code: result.code },
-        'Message processing failed'
-      );
-
+      logger.error({ socketId: socket.id, error: result.error, code: result.code },'Message processing failed');
       callback({
         success: false,
         error: result.error,

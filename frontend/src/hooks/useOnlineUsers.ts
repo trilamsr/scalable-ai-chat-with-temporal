@@ -14,7 +14,6 @@ export function useOnlineUsers(socket: TypedSocket, logger: ILogger): UseOnlineU
     if (!socket) return;
 
     const handleUsersList = (users: UserInfo[]) => {
-      logger.debug({ userCount: users.length }, 'Users list updated');
       setOnlineUsers(users);
     };
 

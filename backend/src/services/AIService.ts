@@ -23,7 +23,7 @@ export class AIService implements IAIStreamService {
     this.defaultModel = defaultModel || AI_CONFIG.DEFAULT_MODEL;
 
     if (!this.apiKey) {
-      logger.warn('OpenAI API key not provided. AI features will not work.');
+      logger.error('OpenAI API key not provided. AI features will not work.');
     }
   }
 

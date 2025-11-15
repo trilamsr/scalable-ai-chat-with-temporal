@@ -10,7 +10,6 @@ export function createGetHistoryHandler(_io: TypedServer, socket: TypedSocket, s
     const { username, roomId } = services.userManager.getUserContext(socket.id);
 
     if (!roomId) {
-      logger.warn({ socketId: socket.id }, 'History request from user not in a room');
       socket.emit('chat_history', []);
       return;
     }
@@ -23,10 +22,6 @@ export function createGetHistoryHandler(_io: TypedServer, socket: TypedSocket, s
     try {
       const messages = await services.chatHistory.getRecentMessages(roomId, count);
       socket.emit('chat_history', messages);
-      logger.debug(
-        { username, socketId: socket.id, roomId, messagesReturned: messages.length },
-        'Chat history sent'
-      );
     } catch (error) {
       logger.error(
         { error: getErrorMessage(error), socketId: socket.id },
@@ -45,7 +40,7 @@ export function createClearHistoryHandler(io: TypedServer, socket: TypedSocket, 
   ): Promise<void> => {
     const username = services.userManager.getUsername(socket.id);
 
-    logger.warn({ username, socketId: socket.id, roomId }, 'Clear history requested');
+    logger.info({ username, socketId: socket.id, roomId }, 'Clear history requested');
 
     try {
       await services.chatHistory.clearHistory(roomId);

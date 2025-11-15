@@ -83,10 +83,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/health', async (_req: Request, res: Response) => {
-  logger.debug('Health check endpoint accessed');
-
   try {
-    
     await redis.ping();
     const userCount = getConnectedUsersCount(services);
 

@@ -79,8 +79,6 @@ export function useAIStream(
     (payload: AIStreamChunkPayload) => {
       if (payload.roomId !== roomId) return;
 
-      logger.debug({ messageId: payload.messageId, chunkLength: payload.chunk.length }, 'AI chunk received');
-
       setAIStreamState((prev) => ({
         ...prev,
         accumulatedText: payload.accumulatedText,

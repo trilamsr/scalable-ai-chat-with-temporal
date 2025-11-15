@@ -22,10 +22,10 @@ export function createRedisClient(lazyConnect: boolean = false): Redis {
 
   const client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', config);
 
-  client.on('connect', () => logger.debug('Redis client connecting'));
-  client.on('ready', () => logger.debug('Redis client ready'));
+  client.on('connect', () => logger.info('Redis client connecting'));
+  client.on('ready', () => logger.info('Redis client ready'));
   client.on('error', (err) => logger.error({ error: err.message }, 'Redis client error'));
-  client.on('close', () => logger.warn('Redis client connection closed'));
+  client.on('close', () => logger.info('Redis client connection closed'));
   client.on('reconnecting', () => logger.info('Redis client reconnecting'));
 
   return client;

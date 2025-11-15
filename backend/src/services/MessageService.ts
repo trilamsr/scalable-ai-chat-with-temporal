@@ -26,7 +26,7 @@ export class MessageService {
     
     const validation = validateData(messageDataSchema, data);
     if (!validation.success) {
-      logger.warn({ socketId, error: validation.error }, 'Invalid message data');
+      logger.error({ socketId, error: validation.error }, 'Invalid message data');
       return {
         success: false,
         error: validation.error,
@@ -35,14 +35,10 @@ export class MessageService {
     }
 
     const validatedData = validation.data;
-
-    
     const username = this.userManager.getUsername(socketId);
     const roomId = this.userManager.getRoomId(socketId);
 
-    
     if (!roomId) {
-      logger.warn({ socketId }, 'Message from user not in a room');
       return {
         success: false,
         error: 'You must join a room before sending messages',
@@ -52,10 +48,7 @@ export class MessageService {
 
     
     if (validatedData.roomId !== roomId) {
-      logger.warn(
-        { socketId, requestedRoom: validatedData.roomId, userRoom: roomId },
-        'Room ID mismatch'
-      );
+      logger.error({ socketId, requestedRoom: validatedData.roomId, userRoom: roomId },'Room ID mismatch');
       return {
         success: false,
         error: 'Room ID does not match your current room',
@@ -100,11 +93,6 @@ export class MessageService {
         logger.error({ messageId: message.id }, 'Failed to persist message (null streamId)');
         return this.createPersistenceError();
       }
-
-      logger.debug(
-        { messageId: message.id, streamId, roomId: message.roomId },
-        'Message persisted successfully'
-      );
 
       return {
         success: true,

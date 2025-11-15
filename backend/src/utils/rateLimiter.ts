@@ -49,7 +49,7 @@ export class RateLimiter {
 
     if (entry.count >= config.maxRequests) {
       
-      logger.warn(
+      logger.error(
         { socketId, eventName, count: entry.count, maxRequests: config.maxRequests },
         'Rate limit exceeded'
       );
@@ -86,10 +86,6 @@ export class RateLimiter {
         this.limits.delete(key);
         cleaned++;
       }
-    }
-
-    if (cleaned > 0) {
-      logger.debug({ cleaned }, 'Cleaned up expired rate limit entries');
     }
   }
 

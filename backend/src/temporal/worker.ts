@@ -19,7 +19,6 @@ export async function startTemporalWorker(
   services: ServiceContainer
 ): Promise<Worker> {
   if (temporalWorker) {
-    logger.warn('Temporal worker already running');
     return temporalWorker;
   }
 

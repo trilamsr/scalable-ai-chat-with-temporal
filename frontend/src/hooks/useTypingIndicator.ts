@@ -21,7 +21,6 @@ export function useTypingIndicator(
     if (!socket) return;
 
     const handleUserTyping = (data: UserTypingPayload) => {
-      logger.debug({ typingUser: data.username, isTyping: data.isTyping }, 'Typing status changed');
       if (data.isTyping) {
         setTypingUsers((prev) => new Set(prev).add(data.username));
       } else {

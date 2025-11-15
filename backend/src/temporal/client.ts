@@ -48,7 +48,7 @@ export async function getTemporalClient(): Promise<Client> {
       const errorMessage = getErrorMessage(error);
 
       if (attempt < TEMPORAL_CONFIG.maxRetries) {
-        logger.warn(
+        logger.error(
           { error: errorMessage, attempt, retryIn: TEMPORAL_CONFIG.retryDelayMs },
           'Failed to connect to Temporal server, retrying...'
         );

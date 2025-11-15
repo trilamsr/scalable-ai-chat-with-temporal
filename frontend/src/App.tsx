@@ -31,8 +31,6 @@ const App: React.FC = () => {
         reconnectionAttempts: 5
       });
 
-      logger.debug({ username: config.username, windowId: index + 1 }, 'Socket created');
-
       return socket;
     });
 
@@ -41,7 +39,7 @@ const App: React.FC = () => {
     return () => {
       logger.info({ socketCount: newSockets.length }, 'Disconnecting all sockets');
       newSockets.forEach((socket, index) => {
-        logger.debug({ username: userConfigs[index].username }, 'Disconnecting socket');
+        logger.info({ username: userConfigs[index].username }, 'Disconnecting socket');
         socket.disconnect();
       });
     };

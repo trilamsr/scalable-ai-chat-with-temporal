@@ -85,7 +85,7 @@ export class AIStreamManager {
   
   async cancelStream(roomId: string): Promise<boolean> {
     if (!this.temporalClient) {
-      logger.warn('Cannot cancel stream - Temporal client not initialized');
+      logger.error('Cannot cancel stream - Temporal client not initialized');
       return false;
     }
 
